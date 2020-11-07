@@ -1,4 +1,3 @@
-
 # Five in a Row
 # 15 x 15
 # 0: Selectable Blank, 1: Non Seletable Blank 2: Black, 3: White
