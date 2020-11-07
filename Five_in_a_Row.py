@@ -13,7 +13,7 @@ class CanNotSelectError(Exception):    # Exception을 상속받아서 새로운 
 array = [ [ 0 for i in range(15) ] for j in range(15)]
 for element in array:
         print(element)      
-
+     
 isWhiteTurn = False
 
 while True:
@@ -22,12 +22,13 @@ while True:
         try:
             row, col = input("Input(row, col): ").split()
             row = int(row)
-            col = int (col)
+            col = int(col)
             if not(0 <=row and row <= 14) and not(0 <= col and col <= 14):
                 raise OutOfIndexError
-            if array[row][col] != 0:
+            if array[row][col] == 2 and array[row][col] == 3:
                 raise CanNotSelectError
-            isCorrect = True;
+            if isCorrect == False and array[row][col] == 1:
+                raise CanNotSelectError
         except Exception as e:
             print("[Exception]", e)
 
@@ -44,3 +45,8 @@ while True:
                 # To Do...
     
     isWhiteTurn = not isWhiteTurn
+
+def detect_unselectable_point(point):
+    is_unselectable_point(point)
+
+def is_unselectable_point(point):
