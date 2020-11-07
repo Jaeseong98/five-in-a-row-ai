@@ -25,10 +25,11 @@ while True:
             col = int(col)
             if not(0 <=row and row <= 14) and not(0 <= col and col <= 14):
                 raise OutOfIndexError
-            if array[row][col] == 2 and array[row][col] == 3:
+            if array[row][col] == 2 or array[row][col] == 3:
                 raise CanNotSelectError
             if isCorrect == False and array[row][col] == 1:
                 raise CanNotSelectError
+            isCorrect = True
         except Exception as e:
             print("[Exception]", e)
 
@@ -42,6 +43,7 @@ while True:
     for arrayRow in array:
         for value in arrayRow:
             if value == 0:
+                _ = 0
                 # To Do...
     
     isWhiteTurn = not isWhiteTurn
@@ -50,3 +52,4 @@ def detect_unselectable_point(point):
     is_unselectable_point(point)
 
 def is_unselectable_point(point):
+    return
