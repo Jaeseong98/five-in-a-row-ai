@@ -28,37 +28,92 @@ def detect_unselectable_point(point, option):
 
     if array[row][col] != 0:
         return
-
+    
     print("Start Detecting Function")
-    if option == 0:
-        count_1, isOpen_1 = check_point_condition(point, 4, (1, 0))
-        count_2, isOpen_2 = check_point_condition(point, 4, (-1, 0))
-        print(count_1)
-    elif option == 1:
-        count_1, isOpen_1 = check_point_condition(point, 4, (0, 1))
-        count_2, isOpen_2 = check_point_condition(point, 4, (0, -1))
-        print(count_1)
-    elif option == 2:
-        count_1, isOpen_1 = check_point_condition(point, 4, (1, 1))
-        count_2, isOpen_2 = check_point_condition(point, 4, (-1, -1))
-        print(count_1)
-    elif option == 3:
-        count_1, isOpen_1 = check_point_condition(point, 4, (1, -1))
-        count_2, isOpen_2 = check_point_condition(point, 4, (-1, 1))
-        print(count_1)
+    rule1Count = 0
+    rule2Count = 0
+    rule3Count = 0
+
+    count_1, isOpen_1 = check_point_condition(point, 4, (1, 0))
+    count_2, isOpen_2 = check_point_condition(point, 4, (-1, 0))
+    totalCount = count_1 + count_2 + 1;
+    if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
+        rule1Count += 1
+        if rule1Count == 2:
+            array[row][col] = 1
+            return
+    if totalCount == 4:
+        rule2Count += 1
+        if rule2Count == 2:
+            array[row][col] = 1
+            return
+    if totalCount > 5:
+       array[row][col] = 1
+       return
+
+    count_1, isOpen_1 = check_point_condition(point, 4, (0, 1))
+    count_2, isOpen_2 = check_point_condition(point, 4, (0, -1))
+    totalCount = count_1 + count_2 + 1;
+    if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
+        rule1Count += 1
+        if rule1Count == 2:
+            array[row][col] = 1
+            return
+    if totalCount == 4:
+        rule2Count += 1
+        if rule2Count == 2:
+            array[row][col] = 1
+            return
+    if totalCount > 5:
+       array[row][col] = 1
+       return
+    
+    count_1, isOpen_1 = check_point_condition(point, 4, (1, 1))
+    count_2, isOpen_2 = check_point_condition(point, 4, (-1, -1))
+    totalCount = count_1 + count_2 + 1;
+    if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
+        rule1Count += 1
+        if rule1Count == 2:
+            array[row][col] = 1
+            return
+    if totalCount == 4:
+        rule2Count += 1
+        if rule2Count == 2:
+            array[row][col] = 1
+            return
+    if totalCount > 5:
+       array[row][col] = 1
+       return
+    
+    count_1, isOpen_1 = check_point_condition(point, 4, (1, -1))
+    count_2, isOpen_2 = check_point_condition(point, 4, (-1, 1))
+    totalCount = count_1 + count_2 + 1;
+    if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
+        rule1Count += 1
+        if rule1Count == 2:
+            array[row][col] = 2
+            return
+    if totalCount == 4:
+        rule2Count += 1
+        if rule2Count == 2:
+            array[row][col] = 2
+            return
+    if totalCount > 5:
+       array[row][col] = 2
+       return
+
+        
 
 def check_point_condition(point, n, different):
-    row, col = point
-    dif_row, dif_col = different
-    nextPoint = (row + dif_row, col + dif_col)
+    point = (point[0] + different[0], point[1] + different[1])
     row, col = point
     
     if (n == 0):
         return (0, True)
-    elif array[row][col] == 3 and (row < 0 or 14 > row) and (col < 0 or 14 > col):
-        return (0, False)
+    elif (row < 0 or 14 > row) and (col < 0 or 14 > col) or array[row][col] == 3:
+        return (0, False)   
     else:
-        _count, _isOpen = check_point_condition(nextPoint, n - 1, different)
+        _count, _isOpen = check_point_condition(point, n - 1, different)
         return ((1 if array[row][col] == 2 else 0) + _count, (True and _isOpen))
 
 
