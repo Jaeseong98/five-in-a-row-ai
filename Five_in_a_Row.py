@@ -9,7 +9,59 @@ class OutOfIndexError(Exception):    # Exception을 상속받아서 새로운 �
 class CanNotSelectError(Exception):    # Exception을 상속받아서 새로운 예외를 만듦
     def __init__(self):
         super().__init__('Can not set in this position')
-        
+
+def update_points_state(point):
+    row, col = point
+    for i in range(1, 5):
+        detect_unselectable_point((row + i, col), 0)
+        detect_unselectable_point((row - i, col), 0)
+        detect_unselectable_point((row, col + i), 1)
+        detect_unselectable_point((row, col - i), 1)
+        detect_unselectable_point((row + i, col + i), 2)
+        detect_unselectable_point((row - i, col - i), 2)
+        detect_unselectable_point((row + i, col - i), 3)
+        detect_unselectable_point((row - i, col + i), 3)
+    return
+
+def detect_unselectable_point(point, option):
+    row, col = point
+
+    if array[row][col] != 0:
+        return
+
+    print("Start Detecting Function")
+    if option == 0:
+        count_1, isOpen_1 = check_point_condition(point, 4, (1, 0))
+        count_2, isOpen_2 = check_point_condition(point, 4, (-1, 0))
+        print(count_1)
+    elif option == 1:
+        count_1, isOpen_1 = check_point_condition(point, 4, (0, 1))
+        count_2, isOpen_2 = check_point_condition(point, 4, (0, -1))
+        print(count_1)
+    elif option == 2:
+        count_1, isOpen_1 = check_point_condition(point, 4, (1, 1))
+        count_2, isOpen_2 = check_point_condition(point, 4, (-1, -1))
+        print(count_1)
+    elif option == 3:
+        count_1, isOpen_1 = check_point_condition(point, 4, (1, -1))
+        count_2, isOpen_2 = check_point_condition(point, 4, (-1, 1))
+        print(count_1)
+
+def check_point_condition(point, n, different):
+    row, col = point
+    dif_row, dif_col = different
+    nextPoint = (row + dif_row, col + dif_col)
+    row, col = point
+    
+    if (n == 0):
+        return (0, True)
+    elif array[row][col] == 3 and (row < 0 or 14 > row) and (col < 0 or 14 > col):
+        return (0, False)
+    else:
+        _count, _isOpen = check_point_condition(nextPoint, n - 1, different)
+        return ((1 if array[row][col] == 2 else 0) + _count, (True and _isOpen))
+
+
 array = [ [ 0 for i in range(15) ] for j in range(15)]
 for element in array:
         print(element)      
@@ -34,23 +86,12 @@ while True:
             print("[Exception]", e)
 
     userIndex = isWhiteTurn + 2
-    print(userIndex)
     array[row][col] = userIndex
-    
+
     for element in array:
         print(element)
+        
+    if isWhiteTurn == False:
+        update_points_state((row, col))
 
-    for arrayRow in array:
-        for value in arrayRow:
-            if value == 0:
-                _ = 0
-                # To Do...
-    
     isWhiteTurn = not isWhiteTurn
-
-def detect_unselectable_point(point):
-    is_unselectable_point(point)
-
-def is_unselectable_point(point):
-    return
-
