@@ -1,10 +1,16 @@
-import game.board import GameBoard
+import click
+
+from game.board import GameBoard
+from game.enum import GameMode
 
 
-def run():
-    gameboard = GameBoard()
+@click.command()
+@click.option('--mode', default='HUMAN_HUMAN', help='')
+def run(mode):
+    mode = GameMode(mode)
+    gameboard = GameBoard(mode)
     gameboard.start()
 
 
-if name == "__main__":
+if __name__ == "__main__":
     run()
