@@ -47,7 +47,7 @@ class GameBoard(object):
     def __str__(self):
         return "\n".join([" ".join(row) for row in self.array])
 
-    def start(self, mode):
+    def start(self):
         point_states = [PointStateEnum.BLACK, PointStateEnum.WHITE]
 
         while True:
@@ -56,24 +56,24 @@ class GameBoard(object):
                     self.move_functions, point_states
                 ):
                     print(self.count)
-                    row, col = move_functions()
+                    row, col = move_function()
                     self.array[row][col] = point_state
-                    self.update_point_states()
+                    self.update_point_states((row, col))
 
             except KeyboardInterrupt:
                 print("Stop Game")
-                print(self.__str__())
+                print(self)
                 break
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
-                print(self.__str__())
+                print(self)
 
     def get_point_from_stdin(self):
         row, col = input("Input(row, col): ").split()
         row, col = int(row), int(col)
         if row < 0 or row >= MAX_SIZE or col < 0 or col >= MAX_SIZE:
             raise OutOfIndexError
-        if array[row][col] in [
+        if self.array[row][col] in [
             PointStateEnum.UNSELECTABLE,
             PointStateEnum.BLACK,
             PointStateEnum.WHITE
@@ -84,23 +84,23 @@ class GameBoard(object):
     def get_point_from_agent(self):
         pass
 
-    def update_point_states(point):
+    def update_point_states(self, point):
         row, col = point
         for i in range(1, 5):
-            detect_unselectable_point((row + i, col), 0)
-            detect_unselectable_point((row - i, col), 0)
-            detect_unselectable_point((row, col + i), 1)
-            detect_unselectable_point((row, col - i), 1)
-            detect_unselectable_point((row + i, col + i), 2)
-            detect_unselectable_point((row - i, col - i), 2)
-            detect_unselectable_point((row + i, col - i), 3)
-            detect_unselectable_point((row - i, col + i), 3)
+            self.detect_unselectable_point((row + i, col), 0)
+            self.detect_unselectable_point((row - i, col), 0)
+            self.detect_unselectable_point((row, col + i), 1)
+            self.detect_unselectable_point((row, col - i), 1)
+            self.detect_unselectable_point((row + i, col + i), 2)
+            self.detect_unselectable_point((row - i, col - i), 2)
+            self.detect_unselectable_point((row + i, col - i), 3)
+            self.detect_unselectable_point((row - i, col + i), 3)
         return 
 
-    def detect_unselectable_point(point, option):
+    def detect_unselectable_point(self, point, option):
         row, col = point
 
-        if array[row][col] != 0:
+        if self.array[row][col] != 0:
             return
         
         print("Start Detecting Function")
@@ -108,73 +108,73 @@ class GameBoard(object):
         rule2Count = 0
         rule3Count = 0
 
-        count_1, isOpen_1 = check_point_condition(point, 4, (1, 0))
-        count_2, isOpen_2 = check_point_condition(point, 4, (-1, 0))
+        count_1, isOpen_1 = self.check_point_condition(point, 4, (1, 0))
+        count_2, isOpen_2 = self.check_point_condition(point, 4, (-1, 0))
         totalCount = count_1 + count_2 + 1
         if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
             rule1Count += 1
             if rule1Count == 2:
-                array[row][col] = 1
+                self.array[row][col] = 1
                 return
         if totalCount == 4:
             rule2Count += 1
             if rule2Count == 2:
-                array[row][col] = 1
+                self.array[row][col] = 1
                 return
         if totalCount > 5:
-        array[row][col] = 1
-        return
+            self.array[row][col] = 1
+            return
 
-        count_1, isOpen_1 = check_point_condition(point, 4, (0, 1))
-        count_2, isOpen_2 = check_point_condition(point, 4, (0, -1))
+        count_1, isOpen_1 = self.check_point_condition(point, 4, (0, 1))
+        count_2, isOpen_2 = self.check_point_condition(point, 4, (0, -1))
         totalCount = count_1 + count_2 + 1
         if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
             rule1Count += 1
             if rule1Count == 2:
-                array[row][col] = 1
+                self.array[row][col] = 1
                 return
         if totalCount == 4:
             rule2Count += 1
             if rule2Count == 2:
-                array[row][col] = 1
+                self.array[row][col] = 1
                 return
         if totalCount > 5:
-        array[row][col] = 1
-        return
+            self.array[row][col] = 1
+            return
         
-        count_1, isOpen_1 = check_point_condition(point, 4, (1, 1))
-        count_2, isOpen_2 = check_point_condition(point, 4, (-1, -1))
+        count_1, isOpen_1 = self.check_point_condition(point, 4, (1, 1))
+        count_2, isOpen_2 = self.check_point_condition(point, 4, (-1, -1))
         totalCount = count_1 + count_2 + 1
         if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
             rule1Count += 1
             if rule1Count == 2:
-                array[row][col] = 1
+                self.array[row][col] = 1
                 return
         if totalCount == 4:
             rule2Count += 1
             if rule2Count == 2:
-                array[row][col] = 1
+                self.array[row][col] = 1
                 return
         if totalCount > 5:
-        array[row][col] = 1
-        return
+            self.array[row][col] = 1
+            return
         
-        count_1, isOpen_1 = check_point_condition(point, 4, (1, -1))
-        count_2, isOpen_2 = check_point_condition(point, 4, (-1, 1))
+        count_1, isOpen_1 = self.check_point_condition(point, 4, (1, -1))
+        count_2, isOpen_2 = self.check_point_condition(point, 4, (-1, 1))
         totalCount = count_1 + count_2 + 1
         if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
             rule1Count += 1
             if rule1Count == 2:
-                array[row][col] = 2
+                self.array[row][col] = 2
                 return
         if totalCount == 4:
             rule2Count += 1
             if rule2Count == 2:
-                array[row][col] = 2
+                self.array[row][col] = 2
                 return
         if totalCount > 5:
-        array[row][col] = 2
-        return
+            self.array[row][col] = 2
+            return
 
     def check_point_condition(self, point, n, different):
         point = (point[0] + different[0], point[1] + different[1])
@@ -182,8 +182,8 @@ class GameBoard(object):
         
         if (n == 0):
             return (0, True)
-        elif (row < 0 or 14 > row) and (col < 0 or 14 > col) or array[row][col] == 3:
+        elif (row < 0 or 14 > row) and (col < 0 or 14 > col) or self.array[row][col] == 3:
             return (0, False)   
         else:
-            _count, _isOpen = check_point_condition(point, n - 1, different)
-            return ((1 if array[row][col] == 2 else 0) + _count, (True and _isOpen))
+            _count, _isOpen = self.check_point_condition(point, n - 1, different)
+            return ((1 if self.array[row][col] == 2 else 0) + _count, (True and _isOpen))
