@@ -122,7 +122,11 @@ def check_lines(point, isWhiteTurn):
             return True
     return False
 
-def check_line_recursion(point, direction):
+def check_discountinuous_line_recursion(point, direction, is_blank_include = False, blank_count = 0):
+    # TO DO ... (using check_point_condition() Method)
+    pass
+
+def check_continuous_line_recursion(point, direction):
     point = (point[0] + direction[0], point[1] + direction[1])
     row, col = point
 
