@@ -49,6 +49,8 @@ def detect_unselectable_points_using_origin_point(originPoint):
         array[originRow][originCol] = 0
 
 def check_unselectable_rules(originPoint, point):
+    global leftSelectableCount
+
     row, col = point
     directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
     
@@ -71,6 +73,7 @@ def check_unselectable_rules(originPoint, point):
             print("Unselectable!" + str(originPoint) + " " + str(point))
             originRow, originCol = originPoint
             array[originRow][originCol] = 1
+            leftSelectableCount -= 1
             break
     return
 
@@ -99,12 +102,20 @@ def is_out_of_array(point):
     row, col = point
     return (row < 0 or 14 < row) or (col < 0 or 14 < col)
 
+def is_finished_game(leftSelectableCount, point):
+    if leftSelectableCount == 0:
+        return True
+    else:
+        # Find Line (point)
+        return False
+
 # Main Logic
 array = [ [ 0 for i in range(15) ] for j in range(15)]
 for element in array:
         print(element)      
      
 isWhiteTurn = False
+leftSelectableCount = 225
 
 while True:
     isCorrect = False
@@ -117,11 +128,14 @@ while True:
                 raise OutOfIndexError
             if array[row][col] == 2 or array[row][col] == 3:
                 raise CanNotSelectError
-            if isCorrect == False and array[row][col] == 1:
+            if isWhiteTurn == False and array[row][col] == 1:
                 raise CanNotSelectError
             isCorrect = True
         except Exception as e:
             print("[Exception]", e)
+
+    if array[row][col] == 0:
+        leftSelectableCount -= 1
 
     userIndex = isWhiteTurn + 2
     array[row][col] = userIndex
@@ -129,6 +143,7 @@ while True:
     if isWhiteTurn == False:
         detect_unselectable_points((row, col))
 
+    print("Left Selectable Count: " + str(leftSelectableCount))
     for element in array:
         print(element)
 
