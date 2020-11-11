@@ -13,62 +13,42 @@ class CanNotSelectError(Exception):    # Exception을 상속받아서 새로운 
     def __init__(self):
         super().__init__('Can not set in this position')
 
-'''
-def update_points_state(point):
+def detect_unselectable_points(point):
     row, col = point
-    for i in range(0, 14):
-        detect_unselectable_point((row + i, col))
-        detect_unselectable_point((row - i, col))
-        detect_unselectable_point((row, col + i))
-        detect_unselectable_point((row, col - i))
-        detect_unselectable_point((row + i, col + i))
-        detect_unselectable_point((row - i, col - i))
-        detect_unselectable_point((row + i, col - i))
-        detect_unselectable_point((row - i, col + i))
+    for i in range(1, 6):
+        detect_unselectable_points_using_origin_point((row + i, col))
+        detect_unselectable_points_using_origin_point((row - i, col))
+        detect_unselectable_points_using_origin_point((row, col + i))
+        detect_unselectable_points_using_origin_point((row, col - i))
+        detect_unselectable_points_using_origin_point((row + i, col + i))
+        detect_unselectable_points_using_origin_point((row - i, col - i))
+        detect_unselectable_points_using_origin_point((row + i, col - i))
+        detect_unselectable_points_using_origin_point((row - i, col + i))
     return
 
-def detect_unselectable_point(point):
-    row, col = point
-    directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
+def detect_unselectable_points_using_origin_point(originPoint):
+    originRow, originCol = originPoint
 
-    if array[row][col] != 0:
+    if is_out_of_array(originPoint) or array[originRow][originCol] != 0:
         return
 
-    print("--------------------------------------------------")
-    print("Start Detecting Function " + str(row)  + " " + str(col))
-    rule1Count = 0
-    rule2Count = 0
-    for direction in directionList:
-        count1, isOpen1 = check_point_condition(point, 4, direction[0])
-        count2, isOpen2 = check_point_condition(point, 4, direction[1])
-        count = count1 + count2 + 1
-        isOpen = isOpen1 and isOpen2
+    check_unselectable_rules(originPoint, originPoint)
 
-        print("Result: " + str(count1)  + " " + str(count2) + " " + str(isOpen1) + " " + str(isOpen2))
+    if array[originRow][originCol] == 0:
+        array[originRow][originCol] = 2
+        directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
+        for direction in directionList:
+            point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
+            row, col = point
+            while is_out_of_array(point) == False and array[row][col] == 2:
+                check_unselectable_rules(originPoint, point)
+                point = (row + direction[0], col + direction[1])
+                row, col = point
+                if array[originRow][originCol] == 1:
+                    return
+        array[originRow][originCol] = 0
 
-        # Check 3 3 Rule
-        if (totalCount == 3 and isOpen1 == True and isOpen2 == True):
-            rule1Count += 1
-
-        # Check 4 4 Rule
-        if totalCount == 4:
-            rule2Count += 1
-
-        # Check Over Five in a Row Rule
-        if rule1Count == 2 or rule2Count == 2 or totalCount > 5:
-            array[row][col] = 1
-            break
-'''
-
-def detect_unselectable_points():
-    #row = 0
-    for row in range(15):
-        for col in range(15):
-            if array[row][col] == 0:
-                check_unselectable_rules((row, col))
-    return
-
-def check_unselectable_rules(point):
+def check_unselectable_rules(originPoint, point):
     row, col = point
     directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
     
@@ -88,50 +68,10 @@ def check_unselectable_rules(point):
             count44 += 1
         
         if (count > 5 or count33 == 2 or count44 == 2):
-            print("Unselectable!")
-            array[row][col] = 1
+            print("Unselectable!" + str(originPoint) + " " + str(point))
+            originRow, originCol = originPoint
+            array[originRow][originCol] = 1
             break
-    return
-
-def is_3x3_rule(point):
-    row, col = point
-    directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
-    
-    count3x3 = 0
-    for direction in directionList:
-        count1, isOpen1 = check_point_condition(point, direction[0])
-        count2, isOpen2 = check_point_condition(point, direction[1])
-        count = count1 + count2 + 1
-        isOpen = isOpen1 and isOpen2
-
-        #print("Result: " + str(point) + " " + str(((count1, count2), (isOpen1, isOpen2))) + " " + str((count, isOpen)))
-        if (count == 3 and isOpen):
-            count3x3 += 1
-        
-        if (count3x3 == 2):
-            print("Unselectable!")
-            array[row][col] = 1
-            break
-    return
-
-def is_4x4_rule(point):
-    row, col = point
-    directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
-
-    count = 0
-    for direction in directionList:
-        pass
-    
-    return
-
-def is_over_five_rule(point):
-    row, col = point
-    directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
-
-    count = 0
-    for direction in directionList:
-        pass
-
     return
 
 def check_point_condition(point, different, is_blank_include = False, blank_count = 0):
@@ -139,9 +79,9 @@ def check_point_condition(point, different, is_blank_include = False, blank_coun
     row, col = point
     
     #print("Start Check Point Function " + str(row)  + " " + str(col))
-    if (blank_count >= 2):
+    if blank_count >= 2:
         return (0, True)
-    elif (is_out_of_array(point) or array[row][col] == 3):
+    elif is_out_of_array(point) or array[row][col] == 3:
         return (0, False)
     elif array[row][col] == 0 or array[row][col] == 1:
         if is_blank_include:
@@ -158,7 +98,6 @@ def check_point_condition(point, different, is_blank_include = False, blank_coun
 def is_out_of_array(point):
     row, col = point
     return (row < 0 or 14 < row) or (col < 0 or 14 < col)
-
 
 # Main Logic
 array = [ [ 0 for i in range(15) ] for j in range(15)]
@@ -186,12 +125,11 @@ while True:
 
     userIndex = isWhiteTurn + 2
     array[row][col] = userIndex
+        
+    if isWhiteTurn == False:
+        detect_unselectable_points((row, col))
 
     for element in array:
         print(element)
-        
-    if isWhiteTurn == False:
-        #update_points_state((row, col))
-        detect_unselectable_points()
 
     #isWhiteTurn = not isWhiteTurn
