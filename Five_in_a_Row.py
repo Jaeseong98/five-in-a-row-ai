@@ -25,92 +25,45 @@ def update_points_state(point):
 
 def detect_unselectable_point(point, option):
     row, col = point
+    directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
 
     if array[row][col] != 0:
         return
-    
-    print("Start Detecting Function")
+
+    print("--------------------------------------------------")
+    print("Start Detecting Function " + str(row)  + " " + str(col))
     rule1Count = 0
     rule2Count = 0
-    rule3Count = 0
+    for direction in directionList:
+        count1, isOpen1 = check_point_condition(point, 4, direction[0])
+        count2, isOpen2 = check_point_condition(point, 4, direction[1])
+        totalCount = count1 + count2 + 1
 
-    count_1, isOpen_1 = check_point_condition(point, 4, (1, 0))
-    count_2, isOpen_2 = check_point_condition(point, 4, (-1, 0))
-    totalCount = count_1 + count_2 + 1;
-    if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
-        rule1Count += 1
-        if rule1Count == 2:
-            array[row][col] = 1
-            return
-    if totalCount == 4:
-        rule2Count += 1
-        if rule2Count == 2:
-            array[row][col] = 1
-            return
-    if totalCount > 5:
-       array[row][col] = 1
-       return
+        print("Result: " + str(count1)  + " " + str(count2) + " " + str(isOpen1) + " " + str(isOpen2))
 
-    count_1, isOpen_1 = check_point_condition(point, 4, (0, 1))
-    count_2, isOpen_2 = check_point_condition(point, 4, (0, -1))
-    totalCount = count_1 + count_2 + 1;
-    if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
-        rule1Count += 1
-        if rule1Count == 2:
-            array[row][col] = 1
-            return
-    if totalCount == 4:
-        rule2Count += 1
-        if rule2Count == 2:
-            array[row][col] = 1
-            return
-    if totalCount > 5:
-       array[row][col] = 1
-       return
-    
-    count_1, isOpen_1 = check_point_condition(point, 4, (1, 1))
-    count_2, isOpen_2 = check_point_condition(point, 4, (-1, -1))
-    totalCount = count_1 + count_2 + 1;
-    if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
-        rule1Count += 1
-        if rule1Count == 2:
-            array[row][col] = 1
-            return
-    if totalCount == 4:
-        rule2Count += 1
-        if rule2Count == 2:
-            array[row][col] = 1
-            return
-    if totalCount > 5:
-       array[row][col] = 1
-       return
-    
-    count_1, isOpen_1 = check_point_condition(point, 4, (1, -1))
-    count_2, isOpen_2 = check_point_condition(point, 4, (-1, 1))
-    totalCount = count_1 + count_2 + 1;
-    if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
-        rule1Count += 1
-        if rule1Count == 2:
-            array[row][col] = 2
-            return
-    if totalCount == 4:
-        rule2Count += 1
-        if rule2Count == 2:
-            array[row][col] = 2
-            return
-    if totalCount > 5:
-       array[row][col] = 2
-       return
+        # Check 3 3 Rule
+        if (totalCount == 3 and isOpen1 == True and isOpen2 == True):
+            rule1Count += 1
 
-        
+        # Check 4 4 Rule
+        if totalCount == 4:
+            rule2Count += 1
+
+        # Check Over Five in a Row Rule
+        if rule1Count == 2 or rule2Count == 2 or totalCount > 5:
+            array[row][col] = 1
+            break
 
 def check_point_condition(point, n, different):
     point = (point[0] + different[0], point[1] + different[1])
     row, col = point
-    
+
+    print("Start Check Point Function " + str(row)  + " " + str(col) + " " + str(n))
     if (n == 0):
+        print("True")
         return (0, True)
-    elif (row < 0 or 14 > row) and (col < 0 or 14 > col) or array[row][col] == 3:
+    elif (row < 0 or 14 < row) or (col < 0 or 14 < col) or array[row][col] == 3:
+        print("False: " + str((row < 0 or 14 < row))  + " " + str((col < 0 or 14 < col)) + " " + str(array[row][col] == 3))
         return (0, False)   
     else:
         _count, _isOpen = check_point_condition(point, n - 1, different)
@@ -149,4 +102,4 @@ while True:
     if isWhiteTurn == False:
         update_points_state((row, col))
 
-    isWhiteTurn = not isWhiteTurn
+    #isWhiteTurn = not isWhiteTurn
