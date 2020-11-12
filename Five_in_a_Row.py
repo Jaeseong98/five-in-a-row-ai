@@ -107,7 +107,7 @@ def detect_unselectable_points_from_origin_point(originPoint):
     array[originRow][originCol] = 0
 
 def check_33_rules(originPoint, point):
-    global leftSelectableCount
+    global unselectablePointList
 
     row, col = point
     directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
@@ -126,12 +126,12 @@ def check_33_rules(originPoint, point):
             print("Unselectable!" + str(originPoint) + " " + str(point))
             originRow, originCol = originPoint
             array[originRow][originCol] = 1
-            leftSelectableCount -= 1
+            unselectablePointList.append(originPoint)
             break
     return
 
 def check_44_rules(originPoint, point):
-    global leftSelectableCount
+    global unselectablePointList
 
     row, col = point
     directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
@@ -150,7 +150,7 @@ def check_44_rules(originPoint, point):
             print("Unselectable!" + str(originPoint) + " " + str(point))
             originRow, originCol = originPoint
             array[originRow][originCol] = 1
-            leftSelectableCount -= 1
+            unselectablePointList.append(originPoint)
             break
     return
 
@@ -218,23 +218,28 @@ def is_out_of_array(point):
 ARRAY_SIZE = 15
 
 # Main Logic
-array = [ [ 0 for i in range(ARRAY_SIZE) ] for j in range(ARRAY_SIZE)]     
+array = [ [ 0 for i in range(ARRAY_SIZE) ] for j in range(ARRAY_SIZE)] 
+totalBlankCount = ARRAY_SIZE * ARRAY_SIZE
 leftSelectableCount = ARRAY_SIZE * ARRAY_SIZE
 
 testBlackPreSettingList = [
-    (3, 3), 
-    (3, 4),
-    (3, 5), 
-    (3, 6),
-    (7, 6),
+    # (3, 3), 
+    # (3, 4),
+    # (3, 5), 
+    # (3, 6),
+    # (7, 6),
 ]
 
 testWhitePreSettingList = [
-    (2, 6)
+    # (2, 6),
+    # (8, 6)
 ]
 
 testTurnList = [
-    
+    (3, 3), 
+    (3, 4),
+    (3, 5),
+    (5, 5),
 ]
 
 for row, col in testBlackPreSettingList:
@@ -246,6 +251,7 @@ for row, col in testWhitePreSettingList:
 for element in array:
         print(element) 
 
+unselectablePointList = []
 gameState = 0
 isWhiteTurn = False
 curTestTurnCount = 0
@@ -258,6 +264,13 @@ while gameState == 0:
                 curTestTurnCount += 1
             else:
                 point = input("Input(row, col): ").split()
+
+            # For Debugging
+            if int(point[0]) == -1:
+                print("Change isWhiteTurn: " + str(isWhiteTurn) + " -> " + str(not isWhiteTurn))
+                isWhiteTurn = not isWhiteTurn
+                continue
+                
             row = int(point[0])
             col = int(point[1])
             if not(0 <= row and row <= 14) and not(0 <= col and col <= 14):
@@ -270,8 +283,10 @@ while gameState == 0:
         except Exception as e:
             print("[Exception]", e)
 
-    if array[row][col] == 0:
-        leftSelectableCount -= 1
+    totalBlankCount -= 1
+
+    if isWhiteTurn and array[row][col] == 1:
+        unselectablePointList.remove((row, col))
 
     userIndex = isWhiteTurn + 2
     array[row][col] = userIndex
@@ -281,13 +296,14 @@ while gameState == 0:
     else:
         pass
 
+    leftSelectableCount = totalBlankCount - len(unselectablePointList)
+    gameState = is_finished_game(leftSelectableCount, (row, col), isWhiteTurn)
+    # isWhiteTurn = not isWhiteTurn
+
     print("Left Selectable Count: " + str(leftSelectableCount))
+    print("Unselectable List: " + str(unselectablePointList))
     for element in array:
         print(element)
-
-    gameState = is_finished_game(leftSelectableCount, (row, col), isWhiteTurn)
-
-    # isWhiteTurn = not isWhiteTurn
 
 if gameState == 1:
     print("Black Win!")
