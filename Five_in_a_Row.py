@@ -80,7 +80,6 @@ def check_point_condition(point, direction, is_blank_include = False, blank_coun
     point = (point[0] + direction[0], point[1] + direction[1])
     row, col = point
     
-    #print("Start Check Point Function " + str(row)  + " " + str(col))
     if blank_count >= 2:
         return (0, True)
     elif is_out_of_array(point) or array[row][col] == 3:
@@ -97,56 +96,64 @@ def check_point_condition(point, direction, is_blank_include = False, blank_coun
         _count, _isOpen = check_point_condition(point, direction, is_blank_include, blank_count)
         return (_count + 1, True and _isOpen)
 
-def is_out_of_array(point):
-    row, col = point
-    return (row < 0 or 14 < row) or (col < 0 or 14 < col)
-
 def is_finished_game(leftSelectableCount, point, isWhiteTurn):
+    # Need to Make Enum
+    # 0: No Win, 1: Black Win, 2: White Win, 3: Draw
+
     if leftSelectableCount == 0:
-        return True
+        return 3
+    elif check_lines(point, isWhiteTurn):
+        return 2 if isWhiteTurn else 1 # Ternary Operator
     else:
-        return check_lines(point, isWhiteTurn)
+        return 0
 
 def check_lines(point, isWhiteTurn):
     row, col = point
-    directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
+    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
 
-    for direction in directionList:
-        count1 = check_line_recursion(point, direction[0])
-        count2 = check_line_recursion(point, direction[1])
+    for direction in directionTupleList:
+        userIndex = isWhiteTurn + 2
+        count1 = check_continuous_line_recursion(point, direction[0], userIndex)
+        count2 = check_continuous_line_recursion(point, direction[1], userIndex)
         count = count1 + count2 + 1
 
-        if count == 5 and isWhiteTurn == False:
+        if isWhiteTurn == False and count == 5:
             return True
         elif count >= 5:
             return True
+
     return False
+
+def check_continuous_line_recursion(point, direction, userIndex):
+    point = (point[0] + direction[0], point[1] + direction[1])
+    row, col = point
+
+    if is_out_of_array(point) or array[row][col] != userIndex:
+        return 0
+    else:
+        return 1 + check_continuous_line_recursion(point, direction, userIndex)
 
 def check_discountinuous_line_recursion(point, direction, is_blank_include = False, blank_count = 0):
     # TO DO ... (using check_point_condition() Method)
     pass
 
-def check_continuous_line_recursion(point, direction):
-    point = (point[0] + direction[0], point[1] + direction[1])
+def is_out_of_array(point):
     row, col = point
+    return (row < 0 or ARRAY_SIZE - 1 < row) or (col < 0 or ARRAY_SIZE - 1 < col)
 
-    if is_out_of_array(point) or array[row][col] != 2:
-        return 0
-    else:
-        return 1 + check_lines(point, direction)
-
+ARRAY_SIZE = 15
 
 # Main Logic
-array = [ [ 0 for i in range(15) ] for j in range(15)]
+array = [ [ 0 for i in range(ARRAY_SIZE) ] for j in range(ARRAY_SIZE)]
 for element in array:
         print(element)      
      
 isWhiteTurn = False
-leftSelectableCount = 225
-point = (0, 0)
+leftSelectableCount = ARRAY_SIZE * ARRAY_SIZE
+gameState = 0
 
-#while is_finished_game(leftSelectableCount, point, isWhiteTurn):
-while True:
+# while True:
+while gameState == 0:
     isCorrect = False
     while isCorrect == False:
         try:
@@ -168,12 +175,25 @@ while True:
 
     userIndex = isWhiteTurn + 2
     array[row][col] = userIndex
-        
+    
+    '''
     if isWhiteTurn == False:
         detect_unselectable_points((row, col))
+    '''
 
     print("Left Selectable Count: " + str(leftSelectableCount))
     for element in array:
         print(element)
 
-    #isWhiteTurn = not isWhiteTurn
+    gameState = is_finished_game(leftSelectableCount, (row, col), isWhiteTurn)
+    
+    isWhiteTurn = not isWhiteTurn
+
+if gameState == 1:
+    print("Black Win!")
+elif gameState == 2:
+    print("White Win")
+elif gameState == 3:
+    print("Draw")
+else:
+    print("Error")
