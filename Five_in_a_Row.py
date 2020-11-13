@@ -88,6 +88,7 @@ def detect_unselectable_points():
                     detect_unselectable_points_from_origin_point(point)
     return
 
+
 def detect_unselectable_points_from_origin_point(originPoint):
     originRow, originCol = originPoint
 
@@ -100,11 +101,48 @@ def detect_unselectable_points_from_origin_point(originPoint):
             if array[row][col] == 2:
                 check_33_rule(originPoint, point)
                 check_44_rule(originPoint, point)
+                if array[originRow][originCol] == 1:
+                    return
+
             point = (row + direction[0], col + direction[1])
             row, col = point
-            if array[originRow][originCol] == 1:
-                return
-    print("Enter 0" + str(originPoint))
+
+    array[originRow][originCol] = 0
+
+def detect_selectable_points():
+    removeList = []
+    for unselectablePoint in unselectablePointList:
+        is33Rule = check_33_rule(unselectablePoint, unselectablePoint)
+        is44Rule = check_44_rule(unselectablePoint, unselectablePoint)
+        isOver5Rule = check_over_5_rule(point)
+        if (is33Rule == False and is44Rule == False and isOver5Rule == False):
+            print("Restore Selectable!")
+            removeList.append(unselectablePoint)
+            row, col = point
+            array[row][col] = 0
+        else:
+            detect_selectable_points_from_origin_point(point)
+
+
+def detect_selectable_points_from_origin_point(originPoint):
+    originRow, originCol = originPoint
+
+    array[originRow][originCol] = 2
+    directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
+    for direction in directionList:
+        point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
+        row, col = point
+        while is_out_of_array(point) == False and array[row][col] != 3:
+            if array[row][col] == 2:
+                is33Rule = check_33_rule(originPoint, point)
+                is44Rule = check_44_rule(originPoint, point)
+                if (is33Rule == False and is44Rule == False):
+                    print("Restore Selectable!")
+                    unselectablePointList.remove(point)
+                    array[row][col] = 0
+                    return
+            point = (row + direction[0], col + direction[1])
+            row, col = point
     array[originRow][originCol] = 0
 
 def check_33_rule(originPoint, point):
@@ -128,12 +166,13 @@ def check_33_rule(originPoint, point):
             originRow, originCol = originPoint
             array[originRow][originCol] = 1
             unselectablePointList.append(originPoint)
-            break
-    return
+            return True
+    return False
 
 def check_44_rule(originPoint, point):
     global unselectablePointList
 
+    originRow, originCol = originPoint
     row, col = point
     directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
     
@@ -155,8 +194,8 @@ def check_44_rule(originPoint, point):
             originRow, originCol = originPoint
             array[originRow][originCol] = 1
             unselectablePointList.append(originPoint)
-            break
-    return
+            return True
+    return False
 
 def check_discountinuous_line_recursion(point, direction, is_include_blank = False, blank_count = 0):
     point = (point[0] + direction[0], point[1] + direction[1])
@@ -220,8 +259,8 @@ def check_over_5_rule(point):
             print("Unselectable!" + str(point))
             array[row][col] = 1
             unselectablePointList.append(point)
-            break
-    return
+            return True
+    return False
 
 
 def check_continuous_line_recursion(point, direction, userIndex):
@@ -236,6 +275,22 @@ def check_continuous_line_recursion(point, direction, userIndex):
 def is_out_of_array(point):
     row, col = point
     return (row < 0 or ARRAY_SIZE - 1 < row) or (col < 0 or ARRAY_SIZE - 1 < col)
+
+def print_array_shape():
+    global array
+    for row in range(ARRAY_SIZE):
+        strVal = ""
+        for col in range(ARRAY_SIZE):
+            if array[row][col] == 0:
+                strVal += ". "
+            elif array[row][col] == 1:
+                strVal += "X "
+            elif array[row][col] == 2:
+                strVal += "B "
+            elif array[row][col] == 3:
+                strVal += "W "
+        print(strVal)
+            
 
 ARRAY_SIZE = 15
 
@@ -332,12 +387,16 @@ while gameState == 0:
 
     leftSelectableCount = totalBlankCount - len(unselectablePointList)
     gameState = is_finished_game(leftSelectableCount, (row, col), isWhiteTurn)
-    # isWhiteTurn = not isWhiteTurn
+    isWhiteTurn = not isWhiteTurn
 
     print("Left Selectable Count: " + str(leftSelectableCount))
     print("Unselectable List: " + str(unselectablePointList))
+    print_array_shape()
+    
+    '''
     for element in array:
         print(element)
+    '''
 
 if gameState == 1:
     print("Black Win!")
