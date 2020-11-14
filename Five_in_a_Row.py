@@ -1,3 +1,5 @@
+import sys
+
 # Five in a Row
 # 15 x 15
 # 0: Selectable Blank
@@ -279,8 +281,7 @@ for row, col in testBlackPreSettingList:
 for row, col in testWhitePreSettingList:
     array[row][col] = 3
 
-for element in array:
-        print(element) 
+print_array_shape()
 
 isChangeTurn = True
 
@@ -299,14 +300,17 @@ while gameState == 0:
                 point = input("Input(row, col): ").split()
 
             # For Test
-            if int(point[0]) == -1:
-                print("Change isWhiteTurn: " + str(isWhiteTurn) + " -> " + str(not isWhiteTurn))
-                isWhiteTurn = not isWhiteTurn
-                continue
-            if int(point[0]) == -2:
+            if int(point[0]) == -1: # Maintain Turn
                 print("Chane isChangeTurn: " + str(isChangeTurn) + " -> " + str(not isChangeTurn))
                 isChangeTurn = not isChangeTurn
                 continue
+            elif int(point[0]) == -2:  # Change Turn Forcibly
+                print("Change isWhiteTurn: " + str(isWhiteTurn) + " -> " + str(not isWhiteTurn))
+                isWhiteTurn = not isWhiteTurn
+                continue
+            elif int(point[0]) == -3: # Quit Forcibly
+                print("Quit Forcibly")
+                sys.exit()
                 
             row = int(point[0])
             col = int(point[1])
@@ -343,11 +347,6 @@ while gameState == 0:
     print("Left Selectable Count: " + str(leftSelectableCount))
     print("Unselectable List: " + str(unselectablePointList))
     print_array_shape()
-    
-    '''
-    for element in array:
-        print(element)
-    '''
 
 if gameState == 1:
     print("Black Win!")
