@@ -61,6 +61,9 @@ def detect_selectable_points():
             array[row][col] = 0
         else:
             detect_selectable_points_from_origin_point(point)
+    
+    for point in removeList:
+        unselectablePointList.remove(point)
 
 
 def detect_selectable_points_from_origin_point(originPoint):
