@@ -13,69 +13,6 @@ class CanNotSelectError(Exception):    # Exception을 상속받아서 새로운 
     def __init__(self):
         super().__init__('Can not set in this position')
 
-'''
-def detect_unselectable_points(point):
-    row, col = point
-    for i in range(1, 6):
-        detect_unselectable_points_using_origin_point((row + i, col))
-        detect_unselectable_points_using_origin_point((row - i, col))
-        detect_unselectable_points_using_origin_point((row, col + i))
-        detect_unselectable_points_using_origin_point((row, col - i))
-        detect_unselectable_points_using_origin_point((row + i, col + i))
-        detect_unselectable_points_using_origin_point((row - i, col - i))
-        detect_unselectable_points_using_origin_point((row + i, col - i))
-        detect_unselectable_points_using_origin_point((row - i, col + i))
-    return
-
-def check_unselectable_rules(originPoint, point):
-    global leftSelectableCount
-
-    row, col = point
-    directionList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
-    
-    count33 = 0
-    count44 = 0
-    for direction in directionList:
-        count1, isOpen1 = check_point_condition(point, direction[0])
-        count2, isOpen2 = check_point_condition(point, direction[1])
-        count = count1 + count2 + 1
-        isOpen = isOpen1 and isOpen2
-
-        if (count == 3 and isOpen):
-            count33 += 1
-        
-        if (count == 4 and isOpen):
-            count44 += 1
-        
-        if (count > 5 or count33 == 2 or count44 == 2):
-            print("Unselectable!" + str(originPoint) + " " + str(point))
-            originRow, originCol = originPoint
-            array[originRow][originCol] = 1
-            leftSelectableCount -= 1
-            break
-    return
-
-def check_point_condition(point, direction, is_blank_include = False, blank_count = 0):
-    point = (point[0] + direction[0], point[1] + direction[1])
-    row, col = point
-    
-    if blank_count >= 2:
-        return (0, True)
-    elif is_out_of_array(point) or array[row][col] == 3:
-        return (0, False)
-    elif array[row][col] == 0 or array[row][col] == 1:
-        if is_blank_include:
-            return (0, True)
-        else:
-            _count, _isOpen = check_point_condition(point, direction, is_blank_include, blank_count + 1)
-            return (_count, True and _isOpen)
-    else:
-        if blank_count > 0:
-            is_blank_include = True
-        _count, _isOpen = check_point_condition(point, direction, is_blank_include, blank_count)
-        return (_count + 1, True and _isOpen)
-'''
-
 def detect_unselectable_points():
     for row in range(ARRAY_SIZE):
         for col in range(ARRAY_SIZE):
@@ -111,13 +48,13 @@ def detect_unselectable_points_from_origin_point(originPoint):
 
 def detect_selectable_points():
     removeList = []
-    for unselectablePoint in unselectablePointList:
-        is33Rule = check_33_rule(unselectablePoint, unselectablePoint)
-        is44Rule = check_44_rule(unselectablePoint, unselectablePoint)
+    for point in unselectablePointList:
+        is33Rule = check_33_rule(point, point)
+        is44Rule = check_44_rule(point, point)
         isOver5Rule = check_over_5_rule(point)
         if (is33Rule == False and is44Rule == False and isOver5Rule == False):
             print("Restore Selectable!")
-            removeList.append(unselectablePoint)
+            removeList.append(point)
             row, col = point
             array[row][col] = 0
         else:
@@ -311,6 +248,12 @@ testBlackPreSettingList = [
     # (6, 9),
     # (5, 8),
     # (8, 8),
+
+    (0, 1),
+    (0, 2),
+    (0, 3),
+    (1, 0),
+    (3, 0),
 ]
 
 testWhitePreSettingList = [
@@ -339,6 +282,8 @@ for row, col in testWhitePreSettingList:
 for element in array:
         print(element) 
 
+isChangeTurn = True
+
 unselectablePointList = []
 gameState = 0
 isWhiteTurn = False
@@ -353,10 +298,14 @@ while gameState == 0:
             else:
                 point = input("Input(row, col): ").split()
 
-            # For Debugging
+            # For Test
             if int(point[0]) == -1:
                 print("Change isWhiteTurn: " + str(isWhiteTurn) + " -> " + str(not isWhiteTurn))
                 isWhiteTurn = not isWhiteTurn
+                continue
+            if int(point[0]) == -2:
+                print("Chane isChangeTurn: " + str(isChangeTurn) + " -> " + str(not isChangeTurn))
+                isChangeTurn = not isChangeTurn
                 continue
                 
             row = int(point[0])
@@ -383,11 +332,13 @@ while gameState == 0:
     if isWhiteTurn == False:
         detect_unselectable_points()
     else:
-        pass
+        detect_selectable_points()
 
     leftSelectableCount = totalBlankCount - len(unselectablePointList)
     gameState = is_finished_game(leftSelectableCount, (row, col), isWhiteTurn)
-    isWhiteTurn = not isWhiteTurn
+
+    if isChangeTurn:
+        isWhiteTurn = not isWhiteTurn
 
     print("Left Selectable Count: " + str(leftSelectableCount))
     print("Unselectable List: " + str(unselectablePointList))
