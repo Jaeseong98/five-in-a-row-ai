@@ -5,6 +5,7 @@ class GameMode(enum.Enum):
     HUMAN_COMPUTER = "HUMAN_COMPUTER"
     COMPUTER_HUMAN = "COMPUTER_HUMAN"
     COMPUTER_COMPUTER = "COMPUTER_COMPUTER"
+    TEST = "TEST"
 
 
 class PointStateEnum(enum.Enum):

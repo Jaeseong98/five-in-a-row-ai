@@ -38,11 +38,18 @@ class GameBoard(object):
                 self.get_point_from_agent,
                 self.get_point_from_agent
             ],
+            GameMode.TEST: [
+                self.get_point_from_resource,
+                self.get_point_from_resource
+            ],
         }
         try:
             self.move_functions = mode_function_map[mode]
         except KeyError:
             raise ValueError(f"Wrong game mode input: {mode}")
+
+    def set_get_point_from_resource(self, function):
+        self.get_point_from_resource = function
 
     def __str__(self):
         return "\n".join([" ".join(row) for row in self.array])
@@ -82,6 +89,9 @@ class GameBoard(object):
         return (row, col)
 
     def get_point_from_agent(self):
+        pass
+
+    def get_point_from_resource(self):
         pass
 
     def update_point_states(self, point):
