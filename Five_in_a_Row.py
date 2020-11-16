@@ -99,8 +99,8 @@ def check_33_rule(originPoint, point):
     
     lineCount = 0
     for direction in directionTupleList:
-        count1, isOpen1, is_blank_include1, blank_count1 = check_discountinuous_line_recursion(point, direction[0])
-        count2, isOpen2, is_blank_include2, blank_count2 = check_discountinuous_line_recursion(point, direction[1], is_blank_include1)
+        count1, isOpen1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0])
+        count2, isOpen2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], isBlankInclude1)
         count = count1 + count2 + 1
         isOpen = isOpen1 and isOpen2
 
@@ -121,12 +121,12 @@ def check_44_rule(originPoint, point):
     
     lineCount = 0
     for direction in directionTupleList:
-        count1, isOpen1, is_blank_include1, blank_count1 = check_discountinuous_line_recursion(point, direction[0])
-        count2, isOpen2, is_blank_include2, blank_count2 = check_discountinuous_line_recursion(point, direction[1], is_blank_include1)
+        count1, isOpen1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0])
+        count2, isOpen2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], isBlankInclude1)
         count = count1 + count2 + 1
         isOpen = isOpen1 or isOpen2
         
-        if isOpen == False and blank_count1 + blank_count2 > 1:
+        if isOpen == False and blankCount1 + blankCount2 > 1:
             isOpen = True
 
         if (count == 4 and isOpen):
@@ -137,25 +137,25 @@ def check_44_rule(originPoint, point):
             return True
     return False
 
-def check_discountinuous_line_recursion(point, direction, is_include_blank = False, blank_count = 0):
+def check_discountinuous_line_recursion(point, direction, isIncludeBlank = False, blankCount = 0):
     point = (point[0] + direction[0], point[1] + direction[1])
     row, col = point
     
-    if blank_count >= 2:
-        return (0, True, is_include_blank, blank_count)
+    if blankCount >= 2:
+        return (0, True, isIncludeBlank, blankCount)
     elif is_out_of_array(point) or array[row][col] == 3:
-        return (0, False, is_include_blank, blank_count)
+        return (0, False, isIncludeBlank, blankCount)
     elif array[row][col] == 0 or array[row][col] == 1:
-        if is_include_blank:
-            return (0, True, is_include_blank, blank_count + 1)
+        if isIncludeBlank:
+            return (0, True, isIncludeBlank, blankCount + 1)
         else:
-            _count, _isOpen, _is_include_blank, _blank_count = check_discountinuous_line_recursion(point, direction, is_include_blank, blank_count + 1)
-            return (_count, True and _isOpen, _is_include_blank, _blank_count)
+            _count, _isOpen, _isIncludeBlank, _blankCount = check_discountinuous_line_recursion(point, direction, isIncludeBlank, blankCount + 1)
+            return (_count, _isOpen, _isIncludeBlank, _blankCount)
     else:
-        if blank_count > 0:
-            is_include_blank = True
-        _count, _isOpen, _is_include_blank, _blank_count = check_discountinuous_line_recursion(point, direction, is_include_blank, blank_count)
-        return (_count + 1, True and _isOpen, _is_include_blank, _blank_count)
+        if blankCount > 0:
+            isIncludeBlank = True
+        _count, _isOpen, _isIncludeBlank, _blankCount = check_discountinuous_line_recursion(point, direction, isIncludeBlank, blankCount)
+        return (_count + 1, _isOpen, _isIncludeBlank, _blankCount)
 
 def is_finished_game(leftSelectableCount, point, isWhiteTurn):
     # Need to Make Enum
@@ -189,9 +189,9 @@ def check_over_5_rule(point):
     row, col = point
     directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
     for direction in directionTupleList:
-        userIndex = isWhiteTurn + 2
-        count1 = check_continuous_line_recursion(point, direction[0], 2)
-        count2 = check_continuous_line_recursion(point, direction[1], 2)
+        userIndex = 2 # Always black
+        count1 = check_continuous_line_recursion(point, direction[0], userIndex)
+        count2 = check_continuous_line_recursion(point, direction[1], userIndex)
         count = count1 + count2 + 1
 
         if count > 5:
@@ -278,7 +278,8 @@ testTurnList = [
 
     # (7, 8),
 
-    # (5, 5),
+    (5, 5),
+    (4, 5),
 ]
 
 for row, col in testBlackPreSettingList:
