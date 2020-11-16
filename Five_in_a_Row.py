@@ -190,8 +190,8 @@ def check_over_5_rule(point):
     directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
     for direction in directionTupleList:
         userIndex = isWhiteTurn + 2
-        count1 = check_continuous_line_recursion(point, direction[0], userIndex)
-        count2 = check_continuous_line_recursion(point, direction[1], userIndex)
+        count1 = check_continuous_line_recursion(point, direction[0], 2)
+        count2 = check_continuous_line_recursion(point, direction[1], 2)
         count = count1 + count2 + 1
 
         if count > 5:
