@@ -85,10 +85,10 @@ def detect_selectable_points_from_origin_point(originPoint):
                 is33Rule = check_33_rule(originPoint, point)
                 is44Rule = check_44_rule(originPoint, point)
                 if (is33Rule == True or is44Rule == True):
+                    array[originRow][originCol] = 1
                     return True
             point = (row + direction[0], col + direction[1])
             row, col = point
-    array[originRow][originCol] = 1
     return False
 
 def check_33_rule(originPoint, point):
