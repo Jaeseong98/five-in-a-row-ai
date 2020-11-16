@@ -24,9 +24,8 @@ def detect_unselectable_points():
                 is44Rule = check_44_rule(point, point)
                 isOver5Rule = check_over_5_rule(point)
                 if is33Rule or is44Rule or isOver5Rule:
-                    originRow, originCol = originPoint
-                    array[originRow][originCol] = 1
-                    unselectablePointList.append(originPoint)
+                    array[row][col] = 1
+                    unselectablePointList.append(point)
                 elif array[row][col] == 0:
                     detect_unselectable_points_from_origin_point(point)
     return
@@ -48,8 +47,7 @@ def detect_unselectable_points_from_origin_point(originPoint):
                     originRow, originCol = originPoint
                     array[originRow][originCol] = 1
                     unselectablePointList.append(originPoint)
-                    return 
-
+                    return
             point = (row + direction[0], col + direction[1])
             row, col = point
 
@@ -57,14 +55,13 @@ def detect_unselectable_points_from_origin_point(originPoint):
 
 def detect_selectable_points():
     removeList = []
-    print(len(unselectablePointList))
+
     for point in unselectablePointList:
-        print(point)
         is33Rule = check_33_rule(point, point)
         is44Rule = check_44_rule(point, point)
         isOver5Rule = check_over_5_rule(point)
         if (is33Rule == False and is44Rule == False and isOver5Rule == False):
-            if detect_selectable_points_from_origin_point(point):
+            if detect_selectable_points_from_origin_point(point) == False:
                 print("Restore Selectable!")
                 removeList.append(point)
                 row, col = point
@@ -240,9 +237,9 @@ totalBlankCount = ARRAY_SIZE * ARRAY_SIZE
 leftSelectableCount = ARRAY_SIZE * ARRAY_SIZE
 
 testBlackPreSettingList = [
-    (3, 3), 
-    (3, 4),
-    (3, 5), 
+    # (3, 3), 
+    # (3, 4),
+    # (3, 5), 
     # (3, 6),
     # (7, 6),
 
@@ -257,6 +254,12 @@ testBlackPreSettingList = [
     # (0, 3),
     # (1, 0),
     # (3, 0),
+
+    (3, 3),
+    (3, 4),
+    (3, 5),
+    # (4, 6),
+    # (5, 6),
 ]
 
 testWhitePreSettingList = [
@@ -275,7 +278,7 @@ testTurnList = [
 
     # (7, 8),
 
-    (5, 5),
+    # (5, 5),
 ]
 
 for row, col in testBlackPreSettingList:
