@@ -16,6 +16,7 @@ class CanNotSelectError(Exception):    # Exception을 상속받아서 새로운 
         super().__init__('Can not set in this position')
 
 def detect_unselectable_points():
+    print("Detect Unselectable Points")
     for row in range(ARRAY_SIZE):
         for col in range(ARRAY_SIZE):
             if array[row][col] == 0:
@@ -55,7 +56,8 @@ def detect_unselectable_points_from_origin_point(originPoint):
 
 def detect_selectable_points():
     removeList = []
-
+    
+    print("Detect Selectable Points")
     for point in unselectablePointList:
         is33Rule = check_33_rule(point, point)
         is44Rule = check_44_rule(point, point)
@@ -95,18 +97,33 @@ def check_33_rule(originPoint, point):
     global unselectablePointList
 
     row, col = point
-    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
+    lastBlackIndex = row * ARRAY_SIZE + col
+
+    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1)), ((-1, 0), (1, 0)), ((0, -1), (0, 1)), ((-1, -1), (1, 1)), ((-1, 1), (1, -1))]
     
     lineCount = 0
     for direction in directionTupleList:
-        count1, isOpen1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0])
-        count2, isOpen2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], isBlankInclude1)
+        count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
+        count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
         count = count1 + count2 + 1
         isOpen = isOpen1 and isOpen2
 
+        if lastBlackIndex1 < lastBlackIndex2:
+            beginIndex = lastBlackIndex1
+            endIndex = lastBlackIndex2
+        else:
+            beginIndex = lastBlackIndex2
+            endIndex = lastBlackIndex1
+
         if (count == 3 and isOpen):
-            lineCount += 1
-        
+            if lineCount == 0:
+                firstLineBeginIndex = beginIndex
+                firstLineEndIndex = endIndex
+                lineCount += 1
+            elif firstLineBeginIndex != beginIndex and firstLineEndIndex != endIndex:
+                print("33: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
+                lineCount += 1
+
         if (lineCount == 2):
             print("Unselectable by 33!" + str(originPoint) + " " + str(point))
             return True
@@ -115,47 +132,62 @@ def check_33_rule(originPoint, point):
 def check_44_rule(originPoint, point):
     global unselectablePointList
 
-    originRow, originCol = originPoint
     row, col = point
-    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
+    lastBlackIndex = row * ARRAY_SIZE + col
+    
+    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1)), ((-1, 0), (1, 0)), ((0, -1), (0, 1)), ((-1, -1), (1, 1)), ((-1, 1), (1, -1))]
     
     lineCount = 0
     for direction in directionTupleList:
-        count1, isOpen1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0])
-        count2, isOpen2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], isBlankInclude1)
+        count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
+        count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
         count = count1 + count2 + 1
-        isOpen = isOpen1 or isOpen2
-        
+        isOpen = isOpen1 or isOpen2   
+    
         if isOpen == False and blankCount1 + blankCount2 > 1:
             isOpen = True
 
+        if lastBlackIndex1 < lastBlackIndex2:
+            beginIndex = lastBlackIndex1
+            endIndex = lastBlackIndex2
+        else:
+            beginIndex = lastBlackIndex2
+            endIndex = lastBlackIndex1
+
         if (count == 4 and isOpen):
-            lineCount += 1
+            if lineCount == 0:
+                firstLineBeginIndex = beginIndex
+                firstLineEndIndex = endIndex
+                lineCount += 1
+            elif firstLineBeginIndex != beginIndex and firstLineEndIndex != endIndex:
+                print("44: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
+                lineCount += 1
         
-        if (lineCount == 2):
+        if lineCount == 2:
             print("Unselectable by 44!" + str(originPoint) + " " + str(point))
             return True
     return False
 
-def check_discountinuous_line_recursion(point, direction, isIncludeBlank = False, blankCount = 0):
+def check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank = False, blankCount = 0):
     point = (point[0] + direction[0], point[1] + direction[1])
     row, col = point
     
     if blankCount >= 2:
-        return (0, True, isIncludeBlank, blankCount)
+        return (0, True, lastBlackIndex, isIncludeBlank, blankCount)
     elif is_out_of_array(point) or array[row][col] == 3:
-        return (0, False, isIncludeBlank, blankCount)
+        return (0, False, lastBlackIndex, isIncludeBlank, blankCount)
     elif array[row][col] == 0 or array[row][col] == 1:
         if isIncludeBlank:
-            return (0, True, isIncludeBlank, blankCount + 1)
+            return (0, True, lastBlackIndex, isIncludeBlank, blankCount + 1)
         else:
-            _count, _isOpen, _isIncludeBlank, _blankCount = check_discountinuous_line_recursion(point, direction, isIncludeBlank, blankCount + 1)
-            return (_count, _isOpen, _isIncludeBlank, _blankCount)
+            _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount + 1)
+            return (_count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
     else:
         if blankCount > 0:
             isIncludeBlank = True
-        _count, _isOpen, _isIncludeBlank, _blankCount = check_discountinuous_line_recursion(point, direction, isIncludeBlank, blankCount)
-        return (_count + 1, _isOpen, _isIncludeBlank, _blankCount)
+        lastBlackIndex = row * ARRAY_SIZE + col
+        _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount)
+        return (_count + 1, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
 
 def is_finished_game(leftSelectableCount, point, isWhiteTurn):
     # Need to Make Enum
@@ -255,11 +287,16 @@ testBlackPreSettingList = [
     # (1, 0),
     # (3, 0),
 
-    (3, 3),
-    (3, 4),
-    (3, 5),
+    # (3, 3),
+    # (3, 4),
+    # (3, 5),
     # (4, 6),
     # (5, 6),
+
+    (3, 3),
+    (4, 3),
+    (7, 3),
+    (9, 3),
 ]
 
 testWhitePreSettingList = [
@@ -278,8 +315,8 @@ testTurnList = [
 
     # (7, 8),
 
-    (5, 5),
-    (4, 5),
+    # (5, 5),
+    # (4, 5),
 ]
 
 for row, col in testBlackPreSettingList:
@@ -342,11 +379,10 @@ while gameState == 0:
 
     if isWhiteTurn == False:
         detect_unselectable_points()
-    else:
-        detect_selectable_points()
-        pass
+    detect_selectable_points()
 
-    leftSelectableCount = totalBlankCount - len(unselectablePointList)
+    leftSelectableCount = totalBlankCount - len(unselectablePointList) - (len(testBlackPreSettingList) + len(testWhitePreSettingList))
+    # leftSelectableCount = totalBlankCount - len(unselectablePointList)
     gameState = is_finished_game(leftSelectableCount, (row, col), isWhiteTurn)
 
     if isChangeTurn:
