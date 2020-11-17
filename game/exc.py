@@ -5,3 +5,6 @@ class OutOfIndexError(Exception):
 class CanNotSelectError(Exception):
     def __init__(self):
         super().__init__('Can not set in this position')
+
+class TestEndError(Exception):
+    pass
