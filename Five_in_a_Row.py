@@ -120,7 +120,7 @@ def check_33_rule(originPoint, point):
                 firstLineBeginIndex = beginIndex
                 firstLineEndIndex = endIndex
                 lineCount += 1
-            elif firstLineBeginIndex != beginIndex and firstLineEndIndex != endIndex:
+            elif firstLineBeginIndex != beginIndex or firstLineEndIndex != endIndex:
                 print("33: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
                 lineCount += 1
 
