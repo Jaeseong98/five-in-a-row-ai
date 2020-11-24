@@ -18,6 +18,6 @@ def test_board(resource_manager):
         white_agent=white_agent,
     )
     game_board.start()
-    assert game_board.get_unselectable_points == ast.literal_eval(
+    assert game_board.unselectable_points == ast.literal_eval(
         resource_manager.read_text("/double_three/unselectable/1.txt")
     )

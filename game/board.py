@@ -55,7 +55,8 @@ class GameBoard(object):
             ]) for line in self.array
         ])
 
-    def get_unselectable_points(self):
+    @property
+    def unselectable_points(self):
         unselectable_points = list()
         for row, line in enumerate(self.array):
             for col, point in enumerate(line):
