@@ -1,7 +1,7 @@
 import traceback
 
 from .enum import GameMode, PointStateEnum, TurnStateEnum
-from .exc import OutOfIndexError, CanNotSelectError
+from .exc import OutOfIndexError, CanNotSelectError, TestEndError
 from .config import MAX_SIZE
 
 
@@ -12,7 +12,7 @@ class GameBoard(object):
 
     """
 
-    def __init__(self, mode):
+    def __init__(self, mode, black_agent=None, white_agent=None):
         self.count = 0
         self.array = [
             [
@@ -20,32 +20,49 @@ class GameBoard(object):
             ] for j in range(MAX_SIZE)
         ]
         self.turn = TurnStateEnum.BLACK
+        self.black_agent = black_agent
+        self.white_agent = white_agent
 
-        mode_function_map = {
-            GameMode.HUMAN_HUMAN: [
-                self.get_point_from_stdin,
-                self.get_point_from_stdin
-            ],
-            GameMode.HUMAN_COMPUTER: [
-                self.get_point_from_stdin,
-                self.get_point_from_agent
-            ],
-            GameMode.COMPUTER_HUMAN: [
-                self.get_point_from_agent,
-                self.get_point_from_stdin
-            ],
-            GameMode.COMPUTER_COMPUTER: [
-                self.get_point_from_agent,
-                self.get_point_from_agent
-            ],
-        }
         try:
+            mode_function_map = {
+                GameMode.HUMAN_HUMAN: [
+                    self.get_next_point_from_stdin,
+                    self.get_next_point_from_stdin
+                ],
+                GameMode.HUMAN_COMPUTER: [
+                    self.get_next_point_from_stdin,
+                    self.white_agent.get_next_point
+                ],
+                GameMode.COMPUTER_HUMAN: [
+                    self.black_agent.get_next_point,
+                    self.get_next_point_from_stdin
+                ],
+                GameMode.COMPUTER_COMPUTER: [
+                    self.black_agent.get_next_point,
+                    self.white_agent.get_next_point
+                ]
+            }
             self.move_functions = mode_function_map[mode]
         except KeyError:
             raise ValueError(f"Wrong game mode input: {mode}")
+        except AttributeError:
+            raise ValueError(f"Invalid agent")
 
     def __str__(self):
-        return "\n".join([" ".join(row) for row in self.array])
+        return "\n".join([
+            " ".join([
+                str(point.value) for point in line
+            ]) for line in self.array
+        ])
+
+    @property
+    def unselectable_points(self):
+        unselectable_points = list()
+        for row, line in enumerate(self.array):
+            for col, point in enumerate(line):
+                if point == PointStateEnum.UNSELECTABLE:
+                    unselectable_points.append((row, col))
+        return unselectable_points
 
     def start(self):
         point_states = [PointStateEnum.BLACK, PointStateEnum.WHITE]
@@ -55,20 +72,21 @@ class GameBoard(object):
                 for move_function, point_state in zip(
                     self.move_functions, point_states
                 ):
-                    print(self.count)
                     row, col = move_function()
                     self.array[row][col] = point_state
-                    self.update_point_states((row, col))
+                    # self.update_point_states((row, col))
 
             except KeyboardInterrupt:
                 print("Stop Game")
                 print(self)
                 break
+            except TestEndError:
+                break
             except Exception:
                 print(traceback.format_exc())
                 print(self)
 
-    def get_point_from_stdin(self):
+    def get_next_point_from_stdin(self):
         row, col = input("Input(row, col): ").split()
         row, col = int(row), int(col)
         if row < 0 or row >= MAX_SIZE or col < 0 or col >= MAX_SIZE:
@@ -80,9 +98,6 @@ class GameBoard(object):
         ]:
             raise CanNotSelectError
         return (row, col)
-
-    def get_point_from_agent(self):
-        pass
 
     def update_point_states(self, point):
         row, col = point
