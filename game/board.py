@@ -1,8 +1,8 @@
 import traceback
 
-from .enum import GameMode, PointStateEnum, TurnStateEnum
+from .enum import GameMode, PointStateEnum, TurnStateEnum, GamestateEnum
 from .exc import OutOfIndexError, CanNotSelectError, TestEndError
-from .config import MAX_SIZE
+from .config import BOARD_SIZE
 
 
 class GameBoard(object):
@@ -13,12 +13,13 @@ class GameBoard(object):
     """
 
     def __init__(self, mode, black_agent=None, white_agent=None):
-        self.count = 0
+        self.totalBlankCount = BOARD_SIZE * BOARD_SIZE
         self.array = [
             [
-                PointStateEnum.BLANK for i in range(MAX_SIZE)
-            ] for j in range(MAX_SIZE)
+                PointStateEnum.BLANK for i in range(BOARD_SIZE)
+            ] for j in range(BOARD_SIZE)
         ]
+        self.unselectable_points = list()
         self.turn = TurnStateEnum.BLACK
         self.black_agent = black_agent
         self.white_agent = white_agent
@@ -55,150 +56,300 @@ class GameBoard(object):
             ]) for line in self.array
         ])
 
-    @property
-    def unselectable_points(self):
-        unselectable_points = list()
-        for row, line in enumerate(self.array):
-            for col, point in enumerate(line):
-                if point == PointStateEnum.UNSELECTABLE:
-                    unselectable_points.append((row, col))
-        return unselectable_points
+    def print_array_shape(self):
+        str_map = {
+            PointStateEnum.BLANK: ". ",
+            PointStateEnum.UNSELECTABLE: "X ",
+            PointStateEnum.BLACK: "B ",
+            PointStateEnum.WHITE: "W ",
+        }
+        for row in range(BOARD_SIZE):
+            strVal = ""
+            for col in range(BOARD_SIZE):
+                strVal += str_map[self.array[row][col]]
+            print(strVal)
+
+    # @property
+    # def unselectable_points(self):
+    #     unselectable_points = list()
+    #     for row, line in enumerate(self.array):
+    #         for col, point in enumerate(line):
+    #             if point == PointStateEnum.UNSELECTABLE:
+    #                 unselectable_points.append((row, col))
+    #     return unselectable_points
+
+    def change_turn(self):
+        if self.turn == TurnStateEnum.BLACK:
+            self.turn = TurnStateEnum.WHITE
+        else:
+            self.turn = TurnStateEnum.BLACK
+
+    def get_current_turn_point_state(self):
+        state_map = {
+            TurnStateEnum.BLACK: PointStateEnum.BLACK,
+            TurnStateEnum.WHITE: PointStateEnum.WHITE
+        }
+        return state_map[self.turn]
+
+    def is_out_of_array(self, point):
+        row, col = point
+        return row < 0 or BOARD_SIZE - 1 < row or col < 0 or BOARD_SIZE - 1 < col
 
     def start(self):
         point_states = [PointStateEnum.BLACK, PointStateEnum.WHITE]
 
         while True:
             try:
-                for move_function, point_state in zip(
-                    self.move_functions, point_states
-                ):
+                for move_function in self.move_functions:
                     row, col = move_function()
-                    self.array[row][col] = point_state
-                    # self.update_point_states((row, col))
+                    self.array[row][col] = self.get_current_turn_point_state()
+                    if self.turn == TurnStateEnum.BLACK:
+                        self.detect_unselectable_points()
+                    self.detect_selectable_points()
+                    self.change_turn()
 
             except KeyboardInterrupt:
                 print("Stop Game")
-                print(self)
                 break
             except TestEndError:
                 break
-            except Exception:
-                print(traceback.format_exc())
-                print(self)
+            # except Exception:
+            #     print(traceback.format_exc())
 
     def get_next_point_from_stdin(self):
         row, col = input("Input(row, col): ").split()
         row, col = int(row), int(col)
-        if row < 0 or row >= MAX_SIZE or col < 0 or col >= MAX_SIZE:
+        if self.is_out_of_array((row, col)):
             raise OutOfIndexError
         if self.array[row][col] in [
-            PointStateEnum.UNSELECTABLE,
             PointStateEnum.BLACK,
             PointStateEnum.WHITE
         ]:
             raise CanNotSelectError
+        if (
+            self.array[row][col] == PointStateEnum.UNSELECTABLE
+            and self.turn == PointStateEnum.BLACK
+        ):
+            raise CanNotSelectError
         return (row, col)
 
-    def update_point_states(self, point):
+    def detect_unselectable_points(self):
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                if self.array[row][col] == PointStateEnum.BLANK:
+                    point = (row, col)
+                    is33Rule = self.check_33_rule(point, point)
+                    is44Rule = self.check_44_rule(point, point)
+                    isOver5Rule = self.check_over_5_rule(point)
+                    if is33Rule or is44Rule or isOver5Rule:
+                        print('unsec check')
+                        self.array[row][col] = 1
+                        self.unselectable_points.append(point)
+                    elif self.array[row][col] == 0:
+                        self.detect_unselectable_points_from_origin_point(point)
+        return
+
+
+    def detect_unselectable_points_from_origin_point(self, originPoint):
+        originRow, originCol = originPoint
+
+        self.array[originRow][originCol] = 2
+        directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
+        for direction in directionList:
+            point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
+            row, col = point
+            while (
+                not self.is_out_of_array(point)
+                and self.array[row][col] != PointStateEnum.WHITE
+            ):
+                if self.array[row][col] == 2:
+                    is33Rule = self.check_33_rule(originPoint, point)
+                    is44Rule = self.check_44_rule(originPoint, point)
+                    if is33Rule or is44Rule:
+                        originRow, originCol = originPoint
+                        self.array[originRow][originCol] = 1
+                        self.unselectable_points.append(originPoint)
+                        return
+                point = (row + direction[0], col + direction[1])
+                row, col = point
+
+        self.array[originRow][originCol] = 0
+
+    def detect_selectable_points(self):
+        removeList = []
+        for point in self.unselectable_points:
+            is33Rule = self.check_33_rule(point, point)
+            is44Rule = self.check_44_rule(point, point)
+            isOver5Rule = self.check_over_5_rule(point)
+            if (is33Rule == False and is44Rule == False and isOver5Rule == False):
+                if self.detect_selectable_points_from_origin_point(point) == False:
+                    removeList.append(point)
+                    row, col = point
+                    self.array[row][col] = 0
+                    pass
+
+        for point in removeList:
+            self.unselectable_points.remove(point)
+
+    def detect_selectable_points_from_origin_point(self, originPoint):
+        originRow, originCol = originPoint
+        self.array[originRow][originCol] = 2
+        directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
+        for direction in directionList:
+            point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
+            row, col = point
+            while self.is_out_of_array(point) == False and self.array[row][col] != 3:
+                if self.array[row][col] == 2:
+                    is33Rule = self.check_33_rule(originPoint, point)
+                    is44Rule = self.check_44_rule(originPoint, point)
+                    if (is33Rule == True or is44Rule == True):
+                        self.array[originRow][originCol] = 1
+                        return True
+                point = (row + direction[0], col + direction[1])
+                row, col = point
+        return False
+
+    def check_33_rule(self, originPoint, point):
         row, col = point
-        for i in range(1, 5):
-            self.detect_unselectable_point((row + i, col), 0)
-            self.detect_unselectable_point((row - i, col), 0)
-            self.detect_unselectable_point((row, col + i), 1)
-            self.detect_unselectable_point((row, col - i), 1)
-            self.detect_unselectable_point((row + i, col + i), 2)
-            self.detect_unselectable_point((row - i, col - i), 2)
-            self.detect_unselectable_point((row + i, col - i), 3)
-            self.detect_unselectable_point((row - i, col + i), 3)
-        return 
+        lastBlackIndex = row * BOARD_SIZE + col
 
-    def detect_unselectable_point(self, point, option):
+        directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1)), ((-1, 0), (1, 0)), ((0, -1), (0, 1)), ((-1, -1), (1, 1)), ((-1, 1), (1, -1))]
+        
+        lineCount = 0
+        for direction in directionTupleList:
+            count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1 = self.check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
+            count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2 = self.check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
+            count = count1 + count2 + 1
+            isOpen = isOpen1 and isOpen2
+
+            if lastBlackIndex1 < lastBlackIndex2:
+                beginIndex = lastBlackIndex1
+                endIndex = lastBlackIndex2
+            else:
+                beginIndex = lastBlackIndex2
+                endIndex = lastBlackIndex1
+
+            if (count == 3 and isOpen):
+                if lineCount == 0:
+                    firstLineBeginIndex = beginIndex
+                    firstLineEndIndex = endIndex
+                    lineCount += 1
+                elif firstLineBeginIndex != beginIndex or firstLineEndIndex != endIndex:
+                    print("33: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
+                    lineCount += 1
+
+            if (lineCount == 2):
+                print("Unselectable by 33!" + str(originPoint) + " " + str(point))
+                return True
+        return False
+
+    def check_44_rule(self, originPoint, point):
         row, col = point
-
-        if self.array[row][col] != 0:
-            return
+        lastBlackIndex = row * BOARD_SIZE + col
         
-        print("Start Detecting Function")
-        rule1Count = 0
-        rule2Count = 0
-        rule3Count = 0
-
-        count_1, isOpen_1 = self.check_point_condition(point, 4, (1, 0))
-        count_2, isOpen_2 = self.check_point_condition(point, 4, (-1, 0))
-        totalCount = count_1 + count_2 + 1
-        if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
-            rule1Count += 1
-            if rule1Count == 2:
-                self.array[row][col] = 1
-                return
-        if totalCount == 4:
-            rule2Count += 1
-            if rule2Count == 2:
-                self.array[row][col] = 1
-                return
-        if totalCount > 5:
-            self.array[row][col] = 1
-            return
-
-        count_1, isOpen_1 = self.check_point_condition(point, 4, (0, 1))
-        count_2, isOpen_2 = self.check_point_condition(point, 4, (0, -1))
-        totalCount = count_1 + count_2 + 1
-        if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
-            rule1Count += 1
-            if rule1Count == 2:
-                self.array[row][col] = 1
-                return
-        if totalCount == 4:
-            rule2Count += 1
-            if rule2Count == 2:
-                self.array[row][col] = 1
-                return
-        if totalCount > 5:
-            self.array[row][col] = 1
-            return
+        directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1)), ((-1, 0), (1, 0)), ((0, -1), (0, 1)), ((-1, -1), (1, 1)), ((-1, 1), (1, -1))]
         
-        count_1, isOpen_1 = self.check_point_condition(point, 4, (1, 1))
-        count_2, isOpen_2 = self.check_point_condition(point, 4, (-1, -1))
-        totalCount = count_1 + count_2 + 1
-        if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
-            rule1Count += 1
-            if rule1Count == 2:
-                self.array[row][col] = 1
-                return
-        if totalCount == 4:
-            rule2Count += 1
-            if rule2Count == 2:
-                self.array[row][col] = 1
-                return
-        if totalCount > 5:
-            self.array[row][col] = 1
-            return
+        lineCount = 0
+        for direction in directionTupleList:
+            count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1 = self.check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
+            count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2 = self.check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
+            count = count1 + count2 + 1
+            isOpen = isOpen1 or isOpen2   
         
-        count_1, isOpen_1 = self.check_point_condition(point, 4, (1, -1))
-        count_2, isOpen_2 = self.check_point_condition(point, 4, (-1, 1))
-        totalCount = count_1 + count_2 + 1
-        if (totalCount == 3 and isOpen_1 == True and isOpen_2 == True):
-            rule1Count += 1
-            if rule1Count == 2:
-                self.array[row][col] = 2
-                return
-        if totalCount == 4:
-            rule2Count += 1
-            if rule2Count == 2:
-                self.array[row][col] = 2
-                return
-        if totalCount > 5:
-            self.array[row][col] = 2
-            return
+            if isOpen == False and blankCount1 + blankCount2 > 1:
+                isOpen = True
 
-    def check_point_condition(self, point, n, different):
-        point = (point[0] + different[0], point[1] + different[1])
+            if lastBlackIndex1 < lastBlackIndex2:
+                beginIndex = lastBlackIndex1
+                endIndex = lastBlackIndex2
+            else:
+                beginIndex = lastBlackIndex2
+                endIndex = lastBlackIndex1
+
+            if (count == 4 and isOpen):
+                if lineCount == 0:
+                    firstLineBeginIndex = beginIndex
+                    firstLineEndIndex = endIndex
+                    lineCount += 1
+                elif firstLineBeginIndex != beginIndex and firstLineEndIndex != endIndex:
+                    print("44: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
+                    lineCount += 1
+            
+            if lineCount == 2:
+                print("Unselectable by 44!" + str(originPoint) + " " + str(point))
+                return True
+        return False
+
+    def check_discountinuous_line_recursion(
+        self, point, direction, lastBlackIndex,
+        isIncludeBlank = False, blankCount = 0
+    ):
+        point = (point[0] + direction[0], point[1] + direction[1])
         row, col = point
         
-        if (n == 0):
-            return (0, True)
-        elif (row < 0 or 14 > row) and (col < 0 or 14 > col) or self.array[row][col] == 3:
-            return (0, False)   
+        if blankCount >= 2:
+            return (0, True, lastBlackIndex, isIncludeBlank, blankCount)
+        elif self.is_out_of_array(point) or self.array[row][col] == 3:
+            return (0, False, lastBlackIndex, isIncludeBlank, blankCount)
+        elif self.array[row][col] == 0 or self.array[row][col] == 1:
+            if isIncludeBlank:
+                return (0, True, lastBlackIndex, isIncludeBlank, blankCount + 1)
+            else:
+                _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = self.check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount + 1)
+                return (_count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
         else:
-            _count, _isOpen = self.check_point_condition(point, n - 1, different)
-            return ((1 if self.array[row][col] == 2 else 0) + _count, (True and _isOpen))
+            if blankCount > 0:
+                isIncludeBlank = True
+            lastBlackIndex = row * BOARD_SIZE + col
+            _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = self.check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount)
+            return (_count + 1, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
+
+    def is_finished_game(self, leftSelectableCount, point):
+        # Need to Make Enum
+        # 0: No Win, 1: Black Win, 2: White Win, 3: Draw
+
+        if leftSelectableCount == 0:
+            return GamestateEnum.DRAW
+        elif self.check_lines(point):
+            return 2 if self.turn == TurnStateEnum.WHITE else 1  # Ternary Operator
+        else:
+            return 0
+
+    def check_lines(self, point):
+        directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
+
+        for direction in directionTupleList:
+            userIndex = self.get_current_turn_point_state()
+            count1 = self.check_continuous_line_recursion(point, direction[0], userIndex)
+            count2 = self.check_continuous_line_recursion(point, direction[1], userIndex)
+            count = count1 + count2 + 1
+
+            if self.turn == TurnStateEnum.BLACK and count == 5:
+                return True
+            elif count >= 5:
+                return True
+
+        return False
+
+    def check_over_5_rule(self, point):
+        directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
+        for direction in directionTupleList:
+            userIndex = PointStateEnum.BLACK # Always black
+            count1 = self.check_continuous_line_recursion(point, direction[0], userIndex)
+            count2 = self.check_continuous_line_recursion(point, direction[1], userIndex)
+            count = count1 + count2 + 1
+
+            if count > 5:
+                print("Unselectable by over5!" + str(point))
+                return True
+        return False
+
+
+    def check_continuous_line_recursion(self, point, direction, userIndex):
+        point = (point[0] + direction[0], point[1] + direction[1])
+        row, col = point
+
+        if self.is_out_of_array(point) or self.array[row][col] != userIndex:
+            return 0
+        else:
+            return 1 + self.check_continuous_line_recursion(point, direction, userIndex)

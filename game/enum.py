@@ -18,3 +18,10 @@ class PointStateEnum(enum.Enum):
 class TurnStateEnum(enum.Enum):
     BLACK = 0
     WHITE = 1
+
+
+class GamestateEnum(enum.Enum):
+    CONTINUE = 0
+    BLACK = 1
+    WHITE = 2
+    DRAW = 3

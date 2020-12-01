@@ -1,1 +1,1 @@
-MAX_SIZE = 15
+BOARD_SIZE = 15
