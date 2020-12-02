@@ -16,7 +16,7 @@ class GameBoard(object):
         self.totalBlankCount = BOARD_SIZE * BOARD_SIZE
         self.array = [
             [
-                PointStateEnum.BLANK for i in range(BOARD_SIZE)
+                PointStateEnum.EMPTY for i in range(BOARD_SIZE)
             ] for j in range(BOARD_SIZE)
         ]
         self.unselectable_points = list()
@@ -51,7 +51,7 @@ class GameBoard(object):
 
     def __str__(self):
         str_map = {
-            PointStateEnum.BLANK: ".",
+            PointStateEnum.EMPTY: ".",
             PointStateEnum.UNSELECTABLE: "X",
             PointStateEnum.BLACK: "B",
             PointStateEnum.WHITE: "W",
@@ -148,16 +148,15 @@ class GameBoard(object):
     def detect_unselectable_points(self):
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
-                if self.array[row][col] == PointStateEnum.BLANK:
+                if self.array[row][col] == PointStateEnum.EMPTY:
                     point = (row, col)
                     is33Rule = self.check_33_rule(point, point)
                     is44Rule = self.check_44_rule(point, point)
                     isOver5Rule = self.check_over_5_rule(point)
                     if is33Rule or is44Rule or isOver5Rule:
-                        print('unsec check')
-                        self.array[row][col] = 1
+                        self.array[row][col] = PointStateEnum.UNSELECTABLE
                         self.unselectable_points.append(point)
-                    elif self.array[row][col] == 0:
+                    elif self.array[row][col] == PointStateEnum.EMPTY:
                         self.detect_unselectable_points_from_origin_point(point)
         return
 
@@ -165,7 +164,7 @@ class GameBoard(object):
     def detect_unselectable_points_from_origin_point(self, originPoint):
         originRow, originCol = originPoint
 
-        self.array[originRow][originCol] = 2
+        self.array[originRow][originCol] = PointStateEnum.BLACK
         directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
         for direction in directionList:
             point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
@@ -174,18 +173,18 @@ class GameBoard(object):
                 not self.is_out_of_array(point)
                 and self.array[row][col] != PointStateEnum.WHITE
             ):
-                if self.array[row][col] == 2:
+                if self.array[row][col] == PointStateEnum.BLACK:
                     is33Rule = self.check_33_rule(originPoint, point)
                     is44Rule = self.check_44_rule(originPoint, point)
                     if is33Rule or is44Rule:
                         originRow, originCol = originPoint
-                        self.array[originRow][originCol] = 1
+                        self.array[originRow][originCol] = PointStateEnum.UNSELECTABLE
                         self.unselectable_points.append(originPoint)
                         return
                 point = (row + direction[0], col + direction[1])
                 row, col = point
 
-        self.array[originRow][originCol] = 0
+        self.array[originRow][originCol] = PointStateEnum.EMPTY
 
     def detect_selectable_points(self):
         removeList = []
@@ -197,7 +196,7 @@ class GameBoard(object):
                 if self.detect_selectable_points_from_origin_point(point) == False:
                     removeList.append(point)
                     row, col = point
-                    self.array[row][col] = 0
+                    self.array[row][col] = PointStateEnum.EMPTY
                     pass
 
         for point in removeList:
@@ -205,17 +204,20 @@ class GameBoard(object):
 
     def detect_selectable_points_from_origin_point(self, originPoint):
         originRow, originCol = originPoint
-        self.array[originRow][originCol] = 2
+        self.array[originRow][originCol] = PointStateEnum.BLACK
         directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
         for direction in directionList:
             point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
             row, col = point
-            while self.is_out_of_array(point) == False and self.array[row][col] != 3:
-                if self.array[row][col] == 2:
+            while (
+                self.is_out_of_array(point) == False
+                and self.array[row][col] != PointStateEnum.WHITE
+            ):
+                if self.array[row][col] == PointStateEnum.BLACK:
                     is33Rule = self.check_33_rule(originPoint, point)
                     is44Rule = self.check_44_rule(originPoint, point)
                     if (is33Rule == True or is44Rule == True):
-                        self.array[originRow][originCol] = 1
+                        self.array[originRow][originCol] = PointStateEnum.UNSELECTABLE
                         return True
                 point = (row + direction[0], col + direction[1])
                 row, col = point
@@ -301,9 +303,12 @@ class GameBoard(object):
         
         if blankCount >= 2:
             return (0, True, lastBlackIndex, isIncludeBlank, blankCount)
-        elif self.is_out_of_array(point) or self.array[row][col] == 3:
+        elif self.is_out_of_array(point) or self.array[row][col] == PointStateEnum.WHITE:
             return (0, False, lastBlackIndex, isIncludeBlank, blankCount)
-        elif self.array[row][col] == 0 or self.array[row][col] == 1:
+        elif (
+            self.array[row][col] == PointStateEnum.EMPTY
+            or self.array[row][col] == PointStateEnum.UNSELECTABLE
+        ):
             if isIncludeBlank:
                 return (0, True, lastBlackIndex, isIncludeBlank, blankCount + 1)
             else:

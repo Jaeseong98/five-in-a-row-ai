@@ -9,7 +9,7 @@ class GameMode(enum.Enum):
 
 
 class PointStateEnum(enum.Enum):
-    BLANK = 0
+    EMPTY = 0
     UNSELECTABLE = 1
     BLACK = 2
     WHITE = 3
