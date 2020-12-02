@@ -50,24 +50,17 @@ class GameBoard(object):
             raise ValueError(f"Invalid agent")
 
     def __str__(self):
+        str_map = {
+            PointStateEnum.BLANK: ".",
+            PointStateEnum.UNSELECTABLE: "X",
+            PointStateEnum.BLACK: "B",
+            PointStateEnum.WHITE: "W",
+        }
         return "\n".join([
             " ".join([
-                str(point.value) for point in line
+                str_map[point] for point in line
             ]) for line in self.array
         ])
-
-    def print_array_shape(self):
-        str_map = {
-            PointStateEnum.BLANK: ". ",
-            PointStateEnum.UNSELECTABLE: "X ",
-            PointStateEnum.BLACK: "B ",
-            PointStateEnum.WHITE: "W ",
-        }
-        for row in range(BOARD_SIZE):
-            strVal = ""
-            for col in range(BOARD_SIZE):
-                strVal += str_map[self.array[row][col]]
-            print(strVal)
 
     # @property
     # def unselectable_points(self):
