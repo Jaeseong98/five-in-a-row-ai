@@ -105,8 +105,16 @@ class GameBoard(object):
                     self.array[row][col] = self.get_current_turn_point_state()
                     if self.turn == TurnStateEnum.BLACK:
                         self.detect_unselectable_points()
+                    else:
+                        if self.array[row][col] == PointStateEnum.UNSELECTABLE:
+                            self.unselectable_points.remove((row, col))
                     self.detect_selectable_points()
                     self.change_turn()
+                    self.totalBlankCount -= 1
+                    self.check_finished(
+                        self.totalBlankCount - len(self.unselectable_points),
+                        (row, col)
+                    )
 
             except KeyboardInterrupt:
                 print("Stop Game")
@@ -115,6 +123,17 @@ class GameBoard(object):
                 break
             # except Exception:
             #     print(traceback.format_exc())
+
+    def check_finished(self, left, point):
+        # Need to Make Enum
+        # 0: No Win, 1: Black Win, 2: White Win, 3: Draw
+
+        if left == 0:
+            return GamestateEnum.DRAW
+        elif self.check_lines(point):
+            return GamestateEnum.WHITE if self.turn == TurnStateEnum.WHITE else GamestateEnum.BLACK  # Ternary Operator
+        else:
+            return GamestateEnum.CONTINUE
 
     def get_next_point_from_stdin(self):
         row, col = input("Input(row, col): ").split()
@@ -303,17 +322,6 @@ class GameBoard(object):
             lastBlackIndex = row * BOARD_SIZE + col
             _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = self.check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount)
             return (_count + 1, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
-
-    def is_finished_game(self, leftSelectableCount, point):
-        # Need to Make Enum
-        # 0: No Win, 1: Black Win, 2: White Win, 3: Draw
-
-        if leftSelectableCount == 0:
-            return GamestateEnum.DRAW
-        elif self.check_lines(point):
-            return 2 if self.turn == TurnStateEnum.WHITE else 1  # Ternary Operator
-        else:
-            return 0
 
     def check_lines(self, point):
         directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
