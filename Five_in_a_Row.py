@@ -247,8 +247,9 @@ def is_out_of_array(point):
 
 def print_array_shape():
     global array
+    print("  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4  ")
     for row in range(ARRAY_SIZE):
-        strVal = ""
+        strVal = str(row % 10) + " "
         for col in range(ARRAY_SIZE):
             if array[row][col] == 0:
                 strVal += ". "
@@ -258,7 +259,9 @@ def print_array_shape():
                 strVal += "B "
             elif array[row][col] == 3:
                 strVal += "W "
+        strVal += str(row % 10)
         print(strVal)
+    print("  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4  ")
             
 
 ARRAY_SIZE = 15
@@ -292,11 +295,6 @@ testBlackPreSettingList = [
     # (3, 5),
     # (4, 6),
     # (5, 6),
-
-    (3, 3),
-    (4, 3),
-    (7, 3),
-    (9, 3),
 ]
 
 testWhitePreSettingList = [
@@ -308,15 +306,47 @@ testWhitePreSettingList = [
 ]
 
 testTurnList = [
-    # (3, 3), 
-    # (3, 4),
-    # (3, 5),
-    # (5, 5),
-
-    # (7, 8),
-
-    # (5, 5),
-    # (4, 5),
+    (2, 0),
+    (14, 0),
+    (2, 1),
+    (14, 1),
+    (2, 3),
+    (14, 2),
+    (3, 3),
+    (14, 3),
+    (6, 3),
+    (14, 5),
+    (8, 3),
+    (14, 6),
+    (9, 3),
+    (14, 7),
+    (2, 4),
+    (14, 8),
+    (2, 5),
+    (14, 10),
+    (9, 6),
+    (7, 6),
+    (7, 7),
+    (14, 11),
+    (9, 7),
+    (14, 12),
+    (10, 7),
+    (14, 13),
+    (7, 8),
+    (7, 14),
+    (4, 9),
+    (8, 14),
+    (7, 9),
+    (10, 14),
+    (9, 9),
+    (3, 10),
+    (4, 10),
+    (11, 14),
+    (5, 10),
+    (12, 14),
+    (6, 10),
+    (13, 14),
+    (6, 11),
 ]
 
 for row, col in testBlackPreSettingList:
