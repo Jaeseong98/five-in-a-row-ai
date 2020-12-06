@@ -27,32 +27,32 @@ def detect_unselectable_points():
                 if is33Rule or is44Rule or isOver5Rule:
                     array[row][col] = 1
                     unselectablePointList.append(point)
-                elif array[row][col] == 0:
-                    detect_unselectable_points_from_origin_point(point)
+                # elif array[row][col] == 0:
+                #     detect_unselectable_points_from_origin_point(point)
     return
 
 
-def detect_unselectable_points_from_origin_point(originPoint):
-    originRow, originCol = originPoint
+# def detect_unselectable_points_from_origin_point(originPoint):
+#     originRow, originCol = originPoint
 
-    array[originRow][originCol] = 2
-    directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    for direction in directionList:
-        point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
-        row, col = point
-        while is_out_of_array(point) == False and array[row][col] != 3:
-            if array[row][col] == 2:
-                is33Rule = check_33_rule(originPoint, point)
-                is44Rule = check_44_rule(originPoint, point)
-                if is33Rule or is44Rule:
-                    originRow, originCol = originPoint
-                    array[originRow][originCol] = 1
-                    unselectablePointList.append(originPoint)
-                    return
-            point = (row + direction[0], col + direction[1])
-            row, col = point
+#     array[originRow][originCol] = 2
+#     directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
+#     for direction in directionList:
+#         point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
+#         row, col = point
+#         while is_out_of_array(point) == False and array[row][col] != 3:
+#             if array[row][col] == 2:
+#                 is33Rule = check_33_rule(originPoint, point)
+#                 is44Rule = check_44_rule(originPoint, point)
+#                 if is33Rule or is44Rule:
+#                     originRow, originCol = originPoint
+#                     array[originRow][originCol] = 1
+#                     unselectablePointList.append(originPoint)
+#                     return
+#             point = (row + direction[0], col + direction[1])
+#             row, col = point
 
-    array[originRow][originCol] = 0
+#     array[originRow][originCol] = 0
 
 def detect_selectable_points():
     removeList = []
@@ -63,12 +63,15 @@ def detect_selectable_points():
         is44Rule = check_44_rule(point, point)
         isOver5Rule = check_over_5_rule(point)
         if (is33Rule == False and is44Rule == False and isOver5Rule == False):
-            if detect_selectable_points_from_origin_point(point) == False:
-                print("Restore Selectable!")
-                removeList.append(point)
-                row, col = point
-                array[row][col] = 0
-                pass
+            print("Restore Selectable!")
+            removeList.append(point)
+            row, col = point
+            array[row][col] = 0
+            # if detect_selectable_points_from_origin_point(point) == False:
+            #     print("Restore Selectable!")
+            #     removeList.append(point)
+            #     row, col = point
+            #     array[row][col] = 0
 
     for point in removeList:
         unselectablePointList.remove(point)
