@@ -139,13 +139,13 @@ def check_44_rule(originPoint, point):
     lastBlackIndex = row * ARRAY_SIZE + col
     
     directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1)), ((-1, 0), (1, 0)), ((0, -1), (0, 1)), ((-1, -1), (1, 1)), ((-1, 1), (1, -1))]
-    
+
     lineCount = 0
     for direction in directionTupleList:
         count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
         count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
         count = count1 + count2 + 1
-        isOpen = isOpen1 or isOpen2   
+        isOpen = isOpen1 or isOpen2  
     
         if isOpen == False and blankCount1 + blankCount2 > 1:
             isOpen = True
@@ -162,10 +162,13 @@ def check_44_rule(originPoint, point):
                 firstLineBeginIndex = beginIndex
                 firstLineEndIndex = endIndex
                 lineCount += 1
-            elif firstLineBeginIndex != beginIndex and firstLineEndIndex != endIndex:
+            elif firstLineBeginIndex != beginIndex or firstLineEndIndex != endIndex:
                 print("44: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
                 lineCount += 1
         
+        if row == 7 and col == 10:
+            print("(7, 10) isOpen is: " + str(isOpen) + " count is: " + str(count) + " lineCount is: " + str(lineCount))
+
         if lineCount == 2:
             print("Unselectable by 44!" + str(originPoint) + " " + str(point))
             return True
