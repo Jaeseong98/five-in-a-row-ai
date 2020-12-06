@@ -102,7 +102,7 @@ def check_33_rule(originPoint, point):
     row, col = point
     lastBlackIndex = row * ARRAY_SIZE + col
 
-    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1)), ((-1, 0), (1, 0)), ((0, -1), (0, 1)), ((-1, -1), (1, 1)), ((-1, 1), (1, -1))]
+    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
     
     lineCount = 0
     for direction in directionTupleList:
