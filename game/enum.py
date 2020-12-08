@@ -20,7 +20,7 @@ class TurnStateEnum(enum.Enum):
     WHITE = 1
 
 
-class GamestateEnum(enum.Enum):
+class GameStateEnum(enum.Enum):
     CONTINUE = 0
     BLACK = 1
     WHITE = 2

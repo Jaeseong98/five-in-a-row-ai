@@ -1,6 +1,6 @@
 import traceback
 
-from .enum import GameMode, PointStateEnum, TurnStateEnum, GamestateEnum
+from .enum import GameMode, PointStateEnum, TurnStateEnum, GameStateEnum
 from .exc import OutOfIndexError, CanNotSelectError, TestEndError
 from .config import BOARD_SIZE
 
@@ -122,11 +122,11 @@ class GameBoard(object):
         # 0: No Win, 1: Black Win, 2: White Win, 3: Draw
 
         if left == 0:
-            return GamestateEnum.DRAW
+            return GameStateEnum.DRAW
         elif self.check_lines(point):
-            return GamestateEnum.WHITE if self.turn == TurnStateEnum.WHITE else GamestateEnum.BLACK  # Ternary Operator
+            return GameStateEnum.WHITE if self.turn == TurnStateEnum.WHITE else GameStateEnum.BLACK  # Ternary Operator
         else:
-            return GamestateEnum.CONTINUE
+            return GameStateEnum.CONTINUE
 
     def get_next_point_from_stdin(self):
         row, col = input("Input(row, col): ").split()
