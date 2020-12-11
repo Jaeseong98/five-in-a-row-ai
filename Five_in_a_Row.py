@@ -27,32 +27,7 @@ def detect_unselectable_points():
                 if is33Rule or is44Rule or isOver5Rule:
                     array[row][col] = 1
                     unselectablePointList.append(point)
-                elif array[row][col] == 0:
-                    detect_unselectable_points_from_origin_point(point)
     return
-
-
-def detect_unselectable_points_from_origin_point(originPoint):
-    originRow, originCol = originPoint
-
-    array[originRow][originCol] = 2
-    directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    for direction in directionList:
-        point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
-        row, col = point
-        while is_out_of_array(point) == False and array[row][col] != 3:
-            if array[row][col] == 2:
-                is33Rule = check_33_rule(originPoint, point)
-                is44Rule = check_44_rule(originPoint, point)
-                if is33Rule or is44Rule:
-                    originRow, originCol = originPoint
-                    array[originRow][originCol] = 1
-                    unselectablePointList.append(originPoint)
-                    return
-            point = (row + direction[0], col + direction[1])
-            row, col = point
-
-    array[originRow][originCol] = 0
 
 def detect_selectable_points():
     removeList = []
@@ -62,36 +37,13 @@ def detect_selectable_points():
         is33Rule = check_33_rule(point, point)
         is44Rule = check_44_rule(point, point)
         isOver5Rule = check_over_5_rule(point)
-        if (is33Rule == False and is44Rule == False and isOver5Rule == False):
-            if detect_selectable_points_from_origin_point(point) == False:
-                print("Restore Selectable!")
-                removeList.append(point)
-                row, col = point
-                array[row][col] = 0
-                pass
+        if ((is33Rule == False and is44Rule == False and isOver5Rule == False) or check_finished_by_lines(point, False)):
+            removeList.append(point)
+            row, col = point
+            array[row][col] = 0
 
     for point in removeList:
         unselectablePointList.remove(point)
-
-
-def detect_selectable_points_from_origin_point(originPoint):
-    originRow, originCol = originPoint
-    
-    array[originRow][originCol] = 2
-    directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    for direction in directionList:
-        point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
-        row, col = point
-        while is_out_of_array(point) == False and array[row][col] != 3:
-            if array[row][col] == 2:
-                is33Rule = check_33_rule(originPoint, point)
-                is44Rule = check_44_rule(originPoint, point)
-                if (is33Rule == True or is44Rule == True):
-                    array[originRow][originCol] = 1
-                    return True
-            point = (row + direction[0], col + direction[1])
-            row, col = point
-    return False
 
 def check_33_rule(originPoint, point):
     global unselectablePointList
@@ -159,10 +111,10 @@ def check_44_rule(originPoint, point):
                 firstLineBeginIndex = beginIndex
                 firstLineEndIndex = endIndex
                 lineCount += 1
-            elif firstLineBeginIndex != beginIndex and firstLineEndIndex != endIndex:
+            elif firstLineBeginIndex != beginIndex or firstLineEndIndex != endIndex:
                 print("44: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
                 lineCount += 1
-        
+
         if lineCount == 2:
             print("Unselectable by 44!" + str(originPoint) + " " + str(point))
             return True
@@ -195,12 +147,12 @@ def is_finished_game(leftSelectableCount, point, isWhiteTurn):
 
     if leftSelectableCount == 0:
         return 3
-    elif check_lines(point, isWhiteTurn):
+    elif check_finished_by_lines(point, isWhiteTurn):
         return 2 if isWhiteTurn else 1 # Ternary Operator
     else:
         return 0
 
-def check_lines(point, isWhiteTurn):
+def check_finished_by_lines(point, isWhiteTurn):
     row, col = point
     directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
 
@@ -212,9 +164,8 @@ def check_lines(point, isWhiteTurn):
 
         if isWhiteTurn == False and count == 5:
             return True
-        elif count >= 5:
+        elif isWhiteTurn == True and count >= 5:
             return True
-
     return False
 
 def check_over_5_rule(point):
@@ -227,7 +178,7 @@ def check_over_5_rule(point):
         count = count1 + count2 + 1
 
         if count > 5:
-            print("Unselectable by over5!" + str(point))
+            print("Unselectable by over 5!" + str(point))
             return True
     return False
 
