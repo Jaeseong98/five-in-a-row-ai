@@ -86,12 +86,12 @@ class GameBoard(object):
         else:
             self.turn = TurnStateEnum.BLACK
 
-    def get_current_turn_point_state(self):
+    def get_point_state_from_turn(self, turn):
         state_map = {
             TurnStateEnum.BLACK: PointStateEnum.BLACK,
             TurnStateEnum.WHITE: PointStateEnum.WHITE
         }
-        return state_map[self.turn]
+        return state_map[turn]
 
     def is_out_of_array(self, point):
         row, col = point
@@ -104,7 +104,7 @@ class GameBoard(object):
             try:
                 for move_function in self.move_functions:
                     row, col = move_function()
-                    self.array[row][col] = self.get_current_turn_point_state()
+                    self.array[row][col] = self.get_point_state_from_turn(self.turn)
                     if self.turn == TurnStateEnum.BLACK:
                         self.detect_unselectable_points()
                     else:
@@ -133,7 +133,7 @@ class GameBoard(object):
 
         if left == 0:
             return GamestateEnum.DRAW
-        elif self.is_finished_by_lines(point, self.turn):
+        elif self.is_finished_by_lines(point, self.get_point_state_from_turn(self.turn)):
             return GamestateEnum.WHITE if self.turn == TurnStateEnum.WHITE else GamestateEnum.BLACK  # Ternary Operator
         else:
             return GamestateEnum.CONTINUE
@@ -280,18 +280,17 @@ class GameBoard(object):
             _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = self.check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount)
             return (_count + 1, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
 
-    def is_finished_by_lines(self, point, stoneColor):
+    def is_finished_by_lines(self, point, color):
         directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
 
         for direction in directionTupleList:
-            userIndex = self.get_current_turn_point_state()
-            count1 = self.check_continuous_line_recursion(point, direction[0], userIndex)
-            count2 = self.check_continuous_line_recursion(point, direction[1], userIndex)
+            count1 = self.check_continuous_line_recursion(point, direction[0], color)
+            count2 = self.check_continuous_line_recursion(point, direction[1], color)
             count = count1 + count2 + 1
 
-            if self.turn == TurnStateEnum.BLACK and count == 5:
+            if color == PointStateEnum.BLACK and count == 5:
                 return True
-            elif count >= 5:
+            elif color == PointStateEnum.WHITE and count >= 5:
                 return True
 
         return False
