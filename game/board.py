@@ -1,6 +1,8 @@
 import traceback
 
-from .enum import GameMode, PointStateEnum, TurnStateEnum, GameStateEnum
+from .enum import (
+    GameMode, PointStateEnum, TurnStateEnum, GameStateEnum, PosPointState
+)
 from .exc import OutOfIndexError, CanNotSelectError, TestEndError
 from .config import BOARD_SIZE
 
@@ -19,10 +21,19 @@ class GameBoard(object):
                 PointStateEnum.EMPTY for i in range(BOARD_SIZE)
             ] for j in range(BOARD_SIZE)
         ]
-        self.unselectable_points = list()
+        self.pos_array = [
+            [
+                list() for i in range(BOARD_SIZE)
+            ] for j in range(BOARD_SIZE)
+        ]
         self.turn = TurnStateEnum.BLACK
         self.black_agent = black_agent
         self.white_agent = white_agent
+
+        self.unselectable_points = list()
+        self.base_vector = [
+            (i, j) for i in range(-1, 2, 1) for j in range(-1, 2, 1) if i or j
+        ]
 
         try:
             mode_function_map = {
@@ -62,14 +73,8 @@ class GameBoard(object):
             ]) for line in self.array
         ])
 
-    # @property
-    # def unselectable_points(self):
-    #     unselectable_points = list()
-    #     for row, line in enumerate(self.array):
-    #         for col, point in enumerate(line):
-    #             if point == PointStateEnum.UNSELECTABLE:
-    #                 unselectable_points.append((row, col))
-    #     return unselectable_points
+    def get_point_state(self, point):
+        return self.array[point[0]][point[1]]
 
     def change_turn(self):
         if self.turn == TurnStateEnum.BLACK:
@@ -89,19 +94,18 @@ class GameBoard(object):
         return row < 0 or BOARD_SIZE - 1 < row or col < 0 or BOARD_SIZE - 1 < col
 
     def start(self):
-        point_states = [PointStateEnum.BLACK, PointStateEnum.WHITE]
-
         while True:
             try:
                 for move_function in self.move_functions:
                     row, col = move_function()
                     self.array[row][col] = self.get_current_turn_point_state()
                     if self.turn == TurnStateEnum.BLACK:
-                        self.detect_unselectable_points()
+                        # self.detect_unselectable_points()
+                        self.set_pos_states((row, col))
                     else:
                         if self.array[row][col] == PointStateEnum.UNSELECTABLE:
                             self.unselectable_points.remove((row, col))
-                    self.detect_selectable_points()
+                    # self.detect_selectable_points()
                     self.change_turn()
                     self.totalBlankCount -= 1
                     self.check_finished(
@@ -350,7 +354,6 @@ class GameBoard(object):
                 return True
         return False
 
-
     def check_continuous_line_recursion(self, point, direction, userIndex):
         point = (point[0] + direction[0], point[1] + direction[1])
         row, col = point
@@ -359,3 +362,174 @@ class GameBoard(object):
             return 0
         else:
             return 1 + self.check_continuous_line_recursion(point, direction, userIndex)
+
+    def check_line_states(self, point, vector):
+        # go to start point
+        empty_count, possible_black_count = 0, 0
+        row, col = point
+        row_vector, col_vector = -vector[0], -vector[1]
+        while True:
+            row, col = row + row_vector, col + col_vector
+            if self.is_out_of_array((row, col)):
+                break
+            point_state = self.array[row][col]
+            if point_state in [PointStateEnum.EMPTY, PointStateEnum.UNSELECTABLE]:
+                possible_black_count += 1
+                empty_count += 1
+                if empty_count == 3 or possible_black_count >= 5:
+                    break
+            elif point_state == PointStateEnum.BLACK:
+                possible_black_count += 1
+                empty_count = 0
+            elif point_state == PointStateEnum.WHITE:
+                break
+
+        # store points until the end of line
+        empty_points, empty_count = list(), 0
+        start_empty_count, in_line_empty_count, end_empty_count = 0, 0, 0
+        black_count, possible_black_count = 0, 0
+        row_vector, col_vector = -row_vector, -col_vector
+        line_started, line_ended = False, False
+        start_point = (row, col)
+        while True:
+            row, col = row + row_vector, col + col_vector
+            if self.is_out_of_array((row, col)):
+                break
+            point_state = self.array[row][col]
+            if point_state in [PointStateEnum.EMPTY, PointStateEnum.UNSELECTABLE]:
+                possible_black_count += 1
+                empty_count += 1
+                if empty_count == 3 or possible_black_count - start_empty_count >= 5:
+                    empty_count -= 1
+                    break
+                if line_started:
+                    line_ended = True
+                empty_points.append((row, col))
+            elif point_state == PointStateEnum.WHITE:
+                break
+            elif point_state == PointStateEnum.BLACK:
+                black_count += 1
+                possible_black_count += 1
+                if not line_started:
+                    start_empty_count = empty_count
+                    empty_count = 0
+                    line_started = True
+                if line_ended:
+                    in_line_empty_count = empty_count
+                    empty_count = 0
+                    line_ended = False
+
+        end_empty_count = empty_count
+        end_point = (row, col)
+        return (
+            start_point,
+            end_point,
+            empty_points,
+            start_empty_count,
+            in_line_empty_count,
+            end_empty_count,
+            black_count,
+            possible_black_count
+        )
+
+    def set_pos_states(self, point):
+        checked_line = list()
+        for vector in self.base_vector:
+            result = self.check_line_states(point, vector)
+            print(point, vector, result)
+            possible_black_count = result[7]
+            if possible_black_count < 5:
+                continue
+            start_point = result[0]
+            end_point = result[1]
+            if (start_point, end_point) in checked_line:
+                continue
+            empty_points = result[2]
+            start_empty_count = result[3]
+            in_line_empty_count = result[4]
+            end_empty_count = result[5]
+            black_count = result[6]
+
+            assert start_empty_count < 3 and end_empty_count < 3
+
+            if (
+                self.is_out_of_array(start_point)
+                or self.get_point_state(start_point) in [
+                    PointStateEnum.BLACK, PointStateEnum.WHITE
+                ]
+            ):
+                empty_points.pop(0)
+                start_empty_count -= 1
+            if (
+                self.is_out_of_array(end_point)
+                or self.get_point_state(end_point) in [
+                    PointStateEnum.BLACK, PointStateEnum.WHITE
+                ]
+            ):
+                empty_points.pop(-1)
+                end_empty_count -= 1
+
+            if black_count == 2:
+                target_points = list()
+                if in_line_empty_count == 0:
+                    target_points = empty_points[:start_empty_count] + empty_points[-end_empty_count:]
+                elif in_line_empty_count == 1:
+                    target_points = empty_points[:min(1, start_empty_count)] + empty_points[-min(1, end_empty_count):]
+                elif in_line_empty_count == 2:
+                    target_points = empty_points[start_empty_count:-end_empty_count]
+                if target_points:
+                    for row, col in target_points:
+                        self.pos_array[row][col].append(PosPointState.DOUBLE_THREE)
+                        if self.pos_array[row][col].count(PosPointState.DOUBLE_THREE) > 1:
+                            self.array[row][col] = PointStateEnum.UNSELECTABLE
+                            self.unselectable_points.append((row, col))
+            elif black_count == 3:
+                target_points = list()
+                if in_line_empty_count == 0:
+                    target_points = empty_points[:start_empty_count] + empty_points[-end_empty_count:]
+                elif in_line_empty_count == 1:
+                    target_points = empty_points[:min(1, start_empty_count)] + empty_points[-min(1, end_empty_count):]
+                elif in_line_empty_count == 2:
+                    target_points = empty_points[start_empty_count:-end_empty_count]
+                if target_points:
+                    for row, col in target_points:
+                        self.pos_array[row][col].append(PosPointState.DOUBLE_FOUR)
+                        if self.pos_array[row][col].count(PosPointState.DOUBLE_FOUR) > 1:
+                            self.array[row][col] = PointStateEnum.UNSELECTABLE
+                            self.unselectable_points.append((row, col))
+            elif black_count == 4:
+                if in_line_empty_count:
+                    row, col = empty_points[start_empty_count - 1]
+                    self.pos_array[row][col].append(PosPointState.ENDABLE)
+                    self.array[row][col] = PointStateEnum.EMPTY
+                else:
+                    row, col = empty_points[start_empty_count - 1]
+                    self.pos_array[row][col].append(PosPointState.ENDABLE)
+                    self.array[row][col] = PointStateEnum.EMPTY
+                    row, col = empty_points[-end_empty_count]
+                    self.pos_array[row][col].append(PosPointState.ENDABLE)
+                    self.array[row][col] = PointStateEnum.EMPTY
+            elif black_count >= 5:
+                row, col = empty_points[start_empty_count]
+                self.pos_array[row][col].append(PosPointState.OVER)
+                self.array[row][col] = PointStateEnum.UNSELECTABLE
+                self.unselectable_points.append((row, col))
+            checked_line.append((end_point, start_point))
+        return
+
+    # def unset_pos_states(self, point, vector):
+    #     row, col = point
+    #     row_vector, col_vector = vector
+    #     for vector in self.base_vector:
+    #         row, col = row + row_vector, col + col_vector
+    #         if self.is_out_of_array((row, col)):
+    #             row, col = point
+    #             continue
+    #         if self.array[row][col] == PointStateEnum.BLACK:
+
+    #         elif self.pos_array[row][col]:
+
+
+    #         else:
+    #             row, col = point
+    #             continue

@@ -25,3 +25,10 @@ class GameStateEnum(enum.Enum):
     BLACK = 1
     WHITE = 2
     DRAW = 3
+
+
+class PosPointState(enum.Enum):
+    DOUBLE_THREE = 1
+    DOUBLE_FOUR = 2
+    FIVE = 3
+    OVER = 4
