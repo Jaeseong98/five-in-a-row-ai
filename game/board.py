@@ -401,12 +401,6 @@ class GameBoard(object):
                         and backward_emtpy_count
                         and possible_count > 5
                     ):
-                        # if search_point == (6, 4):
-                        #     print(point, direction)
-                        #     print(forward_count, forward_emtpy_count, is_countious)
-                        #     print(backward_count, backward_emtpy_count)
-                        #     print(backward_point, forward_point)
-                        #     print('')
                         if three:
                             self.set_point_state(search_point, PointStateEnum.UNSELECTABLE)
                             self.unselectable_points.append(search_point)
@@ -448,12 +442,6 @@ class GameBoard(object):
                     and backward_emtpy_count
                     and possible_count > 5
                 ):
-                    # print('unset')
-                    # print(point, direction)
-                    # print(forward_count, forward_emtpy_count, is_countious)
-                    # print(backward_count, backward_emtpy_count)
-                    # print(backward_point, forward_point)
-                    # print('')
                     if three:
                         double_three = True
                     three = True
@@ -463,11 +451,9 @@ class GameBoard(object):
                         double_four = True
                         break
                     four = True
-                elif stone_count >= 5:
+                elif stone_count >= 5 and is_countious:
                     overline = True
                 checked_line_points.append((forward_point, backward_point))
-            # if point == (6, 4):
-            #     print(endable, double_three, double_four, overline)
             if endable or not (double_three or double_four or overline):
                 self.set_point_state(point, PointStateEnum.EMPTY)
                 self.unselectable_points.remove(point)
