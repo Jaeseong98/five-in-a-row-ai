@@ -27,32 +27,7 @@ def detect_unselectable_points():
                 if is33Rule or is44Rule or isOver5Rule:
                     array[row][col] = 1
                     unselectablePointList.append(point)
-                elif array[row][col] == 0:
-                    detect_unselectable_points_from_origin_point(point)
     return
-
-
-def detect_unselectable_points_from_origin_point(originPoint):
-    originRow, originCol = originPoint
-
-    array[originRow][originCol] = 2
-    directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    for direction in directionList:
-        point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
-        row, col = point
-        while is_out_of_array(point) == False and array[row][col] != 3:
-            if array[row][col] == 2:
-                is33Rule = check_33_rule(originPoint, point)
-                is44Rule = check_44_rule(originPoint, point)
-                if is33Rule or is44Rule:
-                    originRow, originCol = originPoint
-                    array[originRow][originCol] = 1
-                    unselectablePointList.append(originPoint)
-                    return
-            point = (row + direction[0], col + direction[1])
-            row, col = point
-
-    array[originRow][originCol] = 0
 
 def detect_selectable_points():
     removeList = []
@@ -62,36 +37,13 @@ def detect_selectable_points():
         is33Rule = check_33_rule(point, point)
         is44Rule = check_44_rule(point, point)
         isOver5Rule = check_over_5_rule(point)
-        if (is33Rule == False and is44Rule == False and isOver5Rule == False):
-            if detect_selectable_points_from_origin_point(point) == False:
-                print("Restore Selectable!")
-                removeList.append(point)
-                row, col = point
-                array[row][col] = 0
-                pass
+        if ((is33Rule == False and is44Rule == False and isOver5Rule == False) or check_finished_by_lines(point, False)):
+            removeList.append(point)
+            row, col = point
+            array[row][col] = 0
 
     for point in removeList:
         unselectablePointList.remove(point)
-
-
-def detect_selectable_points_from_origin_point(originPoint):
-    originRow, originCol = originPoint
-    
-    array[originRow][originCol] = 2
-    directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    for direction in directionList:
-        point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
-        row, col = point
-        while is_out_of_array(point) == False and array[row][col] != 3:
-            if array[row][col] == 2:
-                is33Rule = check_33_rule(originPoint, point)
-                is44Rule = check_44_rule(originPoint, point)
-                if (is33Rule == True or is44Rule == True):
-                    array[originRow][originCol] = 1
-                    return True
-            point = (row + direction[0], col + direction[1])
-            row, col = point
-    return False
 
 def check_33_rule(originPoint, point):
     global unselectablePointList
@@ -99,14 +51,18 @@ def check_33_rule(originPoint, point):
     row, col = point
     lastBlackIndex = row * ARRAY_SIZE + col
 
-    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1)), ((-1, 0), (1, 0)), ((0, -1), (0, 1)), ((-1, -1), (1, 1)), ((-1, 1), (1, -1))]
+    directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
     
     lineCount = 0
     for direction in directionTupleList:
-        count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
-        count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
+        count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1, isPossibleOver51 = check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
+        count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2, isPossibleOver52 = check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
         count = count1 + count2 + 1
-        isOpen = isOpen1 and isOpen2
+
+        isOpen = isOpen1 or isOpen2
+        
+        if isOpen == False and (not (isPossibleOver51 or isPossibleOver52)) and (blankCount1 > 1 or blankCount2 > 1) and blankCount1 > 0 and blankCount2 > 0:
+            isOpen = True
 
         if lastBlackIndex1 < lastBlackIndex2:
             beginIndex = lastBlackIndex1
@@ -124,6 +80,13 @@ def check_33_rule(originPoint, point):
                 print("33: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
                 lineCount += 1
 
+        if row == 6 and col == 4:
+            print("(6, 4) infos count is: " + str(count))
+            print(" direction is " + str(direction))
+            print(" isOpen1 is: " + str(isOpen1) + " isOpen2 is: "+ str(isOpen2) + " isOpen is: "+ str(isOpen))
+            print(" isPossibleOver51 is: " + str(isPossibleOver51) + " isPossibleOver52 is: "+ str(isPossibleOver52) + " isPossibleOver5 is: " + str((not (isPossibleOver51 or isPossibleOver52)))å)
+            print(" lineCount is: " + str(lineCount))
+
         if (lineCount == 2):
             print("Unselectable by 33!" + str(originPoint) + " " + str(point))
             return True
@@ -139,8 +102,8 @@ def check_44_rule(originPoint, point):
     
     lineCount = 0
     for direction in directionTupleList:
-        count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1 = check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
-        count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2 = check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
+        count1, isOpen1, lastBlackIndex1, isBlankInclude1, blankCount1, isPossibleOver51 = check_discountinuous_line_recursion(point, direction[0], lastBlackIndex)
+        count2, isOpen2, lastBlackIndex2, isBlankInclude2, blankCount2, isPossibleOver52 = check_discountinuous_line_recursion(point, direction[1], lastBlackIndex, isBlankInclude1)
         count = count1 + count2 + 1
         isOpen = isOpen1 or isOpen2   
     
@@ -159,35 +122,39 @@ def check_44_rule(originPoint, point):
                 firstLineBeginIndex = beginIndex
                 firstLineEndIndex = endIndex
                 lineCount += 1
-            elif firstLineBeginIndex != beginIndex and firstLineEndIndex != endIndex:
+            elif firstLineBeginIndex != beginIndex or firstLineEndIndex != endIndex:
                 print("44: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
                 lineCount += 1
-        
+
         if lineCount == 2:
             print("Unselectable by 44!" + str(originPoint) + " " + str(point))
             return True
     return False
 
-def check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank = False, blankCount = 0):
+def check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank = False, blankCount = 0, isPossibleOver5 = False):
     point = (point[0] + direction[0], point[1] + direction[1])
     row, col = point
     
     if blankCount >= 2:
-        return (0, True, lastBlackIndex, isIncludeBlank, blankCount)
+        nextPoint = (point[0] + direction[0], point[1] + direction[1])
+        nextRow, nextCol = nextPoint
+        if not is_out_of_array(point) and array[row][col] == 2:
+            return (0, False, lastBlackIndex, isIncludeBlank, blankCount, True)
+        return (0, True, lastBlackIndex, isIncludeBlank, blankCount, isPossibleOver5)
     elif is_out_of_array(point) or array[row][col] == 3:
-        return (0, False, lastBlackIndex, isIncludeBlank, blankCount)
+        return (0, False, lastBlackIndex, isIncludeBlank, blankCount, isPossibleOver5)
     elif array[row][col] == 0 or array[row][col] == 1:
         if isIncludeBlank:
-            return (0, True, lastBlackIndex, isIncludeBlank, blankCount + 1)
+            return (0, True, lastBlackIndex, isIncludeBlank, blankCount + 1, isPossibleOver5)
         else:
-            _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount + 1)
-            return (_count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
+            _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount, _isPossibleOver5 = check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount + 1, isPossibleOver5)
+            return (_count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount, _isPossibleOver5)
     else:
         if blankCount > 0:
             isIncludeBlank = True
         lastBlackIndex = row * ARRAY_SIZE + col
-        _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount)
-        return (_count + 1, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
+        _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount, _isPossibleOver5 = check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount, isPossibleOver5)
+        return (_count + 1, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount, _isPossibleOver5)
 
 def is_finished_game(leftSelectableCount, point, isWhiteTurn):
     # Need to Make Enum
@@ -195,12 +162,12 @@ def is_finished_game(leftSelectableCount, point, isWhiteTurn):
 
     if leftSelectableCount == 0:
         return 3
-    elif check_lines(point, isWhiteTurn):
+    elif check_finished_by_lines(point, isWhiteTurn):
         return 2 if isWhiteTurn else 1 # Ternary Operator
     else:
         return 0
 
-def check_lines(point, isWhiteTurn):
+def check_finished_by_lines(point, isWhiteTurn):
     row, col = point
     directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
 
@@ -212,9 +179,8 @@ def check_lines(point, isWhiteTurn):
 
         if isWhiteTurn == False and count == 5:
             return True
-        elif count >= 5:
+        elif isWhiteTurn == True and count >= 5:
             return True
-
     return False
 
 def check_over_5_rule(point):
@@ -227,7 +193,7 @@ def check_over_5_rule(point):
         count = count1 + count2 + 1
 
         if count > 5:
-            print("Unselectable by over5!" + str(point))
+            print("Unselectable by over 5!" + str(point))
             return True
     return False
 
@@ -272,6 +238,7 @@ totalBlankCount = ARRAY_SIZE * ARRAY_SIZE
 leftSelectableCount = ARRAY_SIZE * ARRAY_SIZE
 
 testBlackPreSettingList = [
+
     # (3, 3), 
     # (3, 4),
     # (3, 5), 
@@ -306,47 +273,108 @@ testWhitePreSettingList = [
 ]
 
 testTurnList = [
+    # (7, 4),
+    # (2, 1),
+    # (7, 9),
+    # (2, 2),
+    # (7, 7),
+    # (1, 4),
+
+    (1, 4),
+    (0, 0),
+    (4, 4),
+    (1, 0),
+    (5, 4),
     (2, 0),
-    (14, 0),
-    (2, 1),
-    (14, 1),
-    (2, 3),
-    (14, 2),
-    (3, 3),
-    (14, 3),
+    (6, 2),
+    (3, 0),
     (6, 3),
-    (14, 5),
-    (8, 3),
-    (14, 6),
-    (9, 3),
-    (14, 7),
-    (2, 4),
-    (14, 8),
-    (2, 5),
-    (14, 10),
-    (9, 6),
-    (7, 6),
-    (7, 7),
-    (14, 11),
-    (9, 7),
-    (14, 12),
-    (10, 7),
-    (14, 13),
-    (7, 8),
-    (7, 14),
-    (4, 9),
-    (8, 14),
-    (7, 9),
-    (10, 14),
-    (9, 9),
-    (3, 10),
-    (4, 10),
-    (11, 14),
-    (5, 10),
-    (12, 14),
-    (6, 10),
-    (13, 14),
-    (6, 11),
+    (8, 4)
+
+    # (1, 1),
+    # (8, 0),
+    # (3, 2),
+    # (8, 1),
+    # (4, 2),
+    # (8, 2),
+    # (1, 4),
+    # (8, 3),
+    # (10, 1),
+    # (14, 0),
+    # (12, 1),
+    # (14, 1),
+    # (11, 3),
+    # (14, 2),
+    # (11, 4),
+    # (14, 3),
+    # (5, 5),
+    # (14, 5),
+    # (6, 5),
+    # (14, 6),
+    # (9, 5),
+    # (14, 7),
+    # (7, 6),
+    # (14, 8),
+    # (7, 7),
+    # (9, 8),
+    # (4, 9),
+    # (14, 10),
+    # (3, 10),
+    # (14, 11),
+    # (3, 11),
+    # (14, 12),
+    # (5, 10),
+    # (14, 13),
+    # (8, 11),
+    # (9, 14),
+    # (9, 10),
+    # (11, 14),
+    # (10, 11),
+    # (12, 14),
+    # (9, 12),
+    # (13, 14)
+
+    # (2, 0),
+    # (14, 0),
+    # (2, 1),
+    # (14, 1),
+    # (2, 3),
+    # (14, 2),
+    # (3, 3),
+    # (14, 3),
+    # (6, 3),
+    # (14, 5),
+    # (8, 3),
+    # (14, 6),
+    # (9, 3),
+    # (14, 7),
+    # (2, 4),
+    # (14, 8),
+    # (2, 5),
+    # (14, 10),
+    # (9, 6),
+    # (7, 6),
+    # (7, 7),
+    # (14, 11),
+    # (9, 7),
+    # (14, 12),
+    # (10, 7),
+    # (14, 13),
+    # (7, 8),
+    # (7, 14),
+    # (4, 9),
+    # (8, 14),
+    # (7, 9),
+    # (10, 14),
+    # (9, 9),
+    # (3, 10),
+    # (4, 10),
+    # (11, 14),
+    # (5, 10),
+    # (12, 14),
+    # (6, 10),
+    # (13, 14),
+    # (6, 11),
 ]
 
 for row, col in testBlackPreSettingList:

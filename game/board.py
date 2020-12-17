@@ -56,11 +56,20 @@ class GameBoard(object):
             PointStateEnum.BLACK: "B",
             PointStateEnum.WHITE: "W",
         }
-        return "\n".join([
-            " ".join([
+
+        # return "\n".join([
+        #     " ".join([
+        #         str_map[point] for point in line
+        #     ]) for line in  self.array
+        # ])
+
+        colIndexStr = "  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4\n"
+        return colIndexStr + "\n".join([
+            str(rowIndex % 10) + " " + " ".join([
                 str_map[point] for point in line
-            ]) for line in self.array
-        ])
+            ]) + " " + str(rowIndex % 10) for rowIndex, line in  enumerate(self.array)
+        ]) + "\n" + colIndexStr
+
 
     # @property
     # def unselectable_points(self):
@@ -77,12 +86,12 @@ class GameBoard(object):
         else:
             self.turn = TurnStateEnum.BLACK
 
-    def get_current_turn_point_state(self):
+    def get_point_state_from_turn(self, turn):
         state_map = {
             TurnStateEnum.BLACK: PointStateEnum.BLACK,
             TurnStateEnum.WHITE: PointStateEnum.WHITE
         }
-        return state_map[self.turn]
+        return state_map[turn]
 
     def is_out_of_array(self, point):
         row, col = point
@@ -95,7 +104,7 @@ class GameBoard(object):
             try:
                 for move_function in self.move_functions:
                     row, col = move_function()
-                    self.array[row][col] = self.get_current_turn_point_state()
+                    self.array[row][col] = self.get_point_state_from_turn(self.turn)
                     if self.turn == TurnStateEnum.BLACK:
                         self.detect_unselectable_points()
                     else:
@@ -108,6 +117,7 @@ class GameBoard(object):
                         self.totalBlankCount - len(self.unselectable_points),
                         (row, col)
                     )
+                    print(self)
 
             except KeyboardInterrupt:
                 print("Stop Game")
@@ -123,7 +133,7 @@ class GameBoard(object):
 
         if left == 0:
             return GamestateEnum.DRAW
-        elif self.check_lines(point):
+        elif self.is_finished_by_lines(point, self.get_point_state_from_turn(self.turn)):
             return GamestateEnum.WHITE if self.turn == TurnStateEnum.WHITE else GamestateEnum.BLACK  # Ternary Operator
         else:
             return GamestateEnum.CONTINUE
@@ -156,35 +166,7 @@ class GameBoard(object):
                     if is33Rule or is44Rule or isOver5Rule:
                         self.array[row][col] = PointStateEnum.UNSELECTABLE
                         self.unselectable_points.append(point)
-                    elif self.array[row][col] == PointStateEnum.EMPTY:
-                        self.detect_unselectable_points_from_origin_point(point)
         return
-
-
-    def detect_unselectable_points_from_origin_point(self, originPoint):
-        originRow, originCol = originPoint
-
-        self.array[originRow][originCol] = PointStateEnum.BLACK
-        directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-        for direction in directionList:
-            point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
-            row, col = point
-            while (
-                not self.is_out_of_array(point)
-                and self.array[row][col] != PointStateEnum.WHITE
-            ):
-                if self.array[row][col] == PointStateEnum.BLACK:
-                    is33Rule = self.check_33_rule(originPoint, point)
-                    is44Rule = self.check_44_rule(originPoint, point)
-                    if is33Rule or is44Rule:
-                        originRow, originCol = originPoint
-                        self.array[originRow][originCol] = PointStateEnum.UNSELECTABLE
-                        self.unselectable_points.append(originPoint)
-                        return
-                point = (row + direction[0], col + direction[1])
-                row, col = point
-
-        self.array[originRow][originCol] = PointStateEnum.EMPTY
 
     def detect_selectable_points(self):
         removeList = []
@@ -192,42 +174,19 @@ class GameBoard(object):
             is33Rule = self.check_33_rule(point, point)
             is44Rule = self.check_44_rule(point, point)
             isOver5Rule = self.check_over_5_rule(point)
-            if (is33Rule == False and is44Rule == False and isOver5Rule == False):
-                if self.detect_selectable_points_from_origin_point(point) == False:
-                    removeList.append(point)
-                    row, col = point
-                    self.array[row][col] = PointStateEnum.EMPTY
-                    pass
+            if ((is33Rule == False and is44Rule == False and isOver5Rule == False) or self.is_finished_by_lines(point, PointStateEnum.BLACK)):
+                removeList.append(point)
+                row, col = point
+                self.array[row][col] = PointStateEnum.EMPTY
 
         for point in removeList:
             self.unselectable_points.remove(point)
-
-    def detect_selectable_points_from_origin_point(self, originPoint):
-        originRow, originCol = originPoint
-        self.array[originRow][originCol] = PointStateEnum.BLACK
-        directionList = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-        for direction in directionList:
-            point = (originPoint[0] + direction[0], originPoint[1] + direction[1])
-            row, col = point
-            while (
-                self.is_out_of_array(point) == False
-                and self.array[row][col] != PointStateEnum.WHITE
-            ):
-                if self.array[row][col] == PointStateEnum.BLACK:
-                    is33Rule = self.check_33_rule(originPoint, point)
-                    is44Rule = self.check_44_rule(originPoint, point)
-                    if (is33Rule == True or is44Rule == True):
-                        self.array[originRow][originCol] = PointStateEnum.UNSELECTABLE
-                        return True
-                point = (row + direction[0], col + direction[1])
-                row, col = point
-        return False
 
     def check_33_rule(self, originPoint, point):
         row, col = point
         lastBlackIndex = row * BOARD_SIZE + col
 
-        directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1)), ((-1, 0), (1, 0)), ((0, -1), (0, 1)), ((-1, -1), (1, 1)), ((-1, 1), (1, -1))]
+        directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
         
         lineCount = 0
         for direction in directionTupleList:
@@ -285,7 +244,7 @@ class GameBoard(object):
                     firstLineBeginIndex = beginIndex
                     firstLineEndIndex = endIndex
                     lineCount += 1
-                elif firstLineBeginIndex != beginIndex and firstLineEndIndex != endIndex:
+                elif firstLineBeginIndex != beginIndex or firstLineEndIndex != endIndex:
                     print("44: " + str((firstLineBeginIndex, firstLineEndIndex)) + " " + str((beginIndex, endIndex)))
                     lineCount += 1
             
@@ -321,18 +280,17 @@ class GameBoard(object):
             _count, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount = self.check_discountinuous_line_recursion(point, direction, lastBlackIndex, isIncludeBlank, blankCount)
             return (_count + 1, _isOpen, _lastBlackIndex, _isIncludeBlank, _blankCount)
 
-    def check_lines(self, point):
+    def is_finished_by_lines(self, point, color):
         directionTupleList = [((1, 0), (-1, 0)), ((0, 1), (0, -1)), ((1, 1), (-1, -1)), ((1, -1), (-1, 1))]
 
         for direction in directionTupleList:
-            userIndex = self.get_current_turn_point_state()
-            count1 = self.check_continuous_line_recursion(point, direction[0], userIndex)
-            count2 = self.check_continuous_line_recursion(point, direction[1], userIndex)
+            count1 = self.check_continuous_line_recursion(point, direction[0], color)
+            count2 = self.check_continuous_line_recursion(point, direction[1], color)
             count = count1 + count2 + 1
 
-            if self.turn == TurnStateEnum.BLACK and count == 5:
+            if color == PointStateEnum.BLACK and count == 5:
                 return True
-            elif count >= 5:
+            elif color == PointStateEnum.WHITE and count >= 5:
                 return True
 
         return False
