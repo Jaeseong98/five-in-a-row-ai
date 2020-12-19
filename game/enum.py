@@ -14,6 +14,16 @@ class PointStateEnum(enum.Enum):
     BLACK = 2
     WHITE = 3
 
+    def get_opposite(self):
+        if self == self.BLACK:
+            return self.WHITE
+        elif self == self.WHITE:
+            return self.BLACK
+        else:
+            raise ValueError(
+                f'{self.value} has no opposite'
+            )
+
 
 class TurnStateEnum(enum.Enum):
     BLACK = 0
