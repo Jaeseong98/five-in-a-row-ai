@@ -7,10 +7,10 @@ from tests import TestAgent
 
 def run_test(test_name, resource_manager):
     black_agent = TestAgent(
-        resource_manager.read_text(f"/black/{test_name}.txt")
+        resource_manager.read_text(f"/test_unselectable/black/{test_name}.txt")
     )
     white_agent = TestAgent(
-        resource_manager.read_text(f"/white/{test_name}.txt")
+        resource_manager.read_text(f"/test_unselectable/white/{test_name}.txt")
     )
     game_board = GameBoard(
         mode=GameMode.COMPUTER_COMPUTER,
