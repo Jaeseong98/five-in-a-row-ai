@@ -1,5 +1,3 @@
-import traceback
-
 from .enum import GameMode, PointStateEnum, TurnStateEnum, GamestateEnum
 from .exc import (
     OutOfIndexError,
@@ -55,7 +53,7 @@ class GameBoard(object):
         except KeyError:
             raise ValueError(f"Wrong game mode input: {mode}")
         except AttributeError:
-            raise ValueError(f"Invalid agent")
+            raise ValueError("Invalid agent")
 
     def __str__(self):
         str_map = {
@@ -85,7 +83,10 @@ class GameBoard(object):
 
     def is_out_of_array(self, point):
         row, col = point
-        return row < 0 or BOARD_SIZE - 1 < row or col < 0 or BOARD_SIZE - 1 < col
+        return (
+            row < 0 or BOARD_SIZE - 1 < row
+            or col < 0 or BOARD_SIZE - 1 < col
+        )
 
     def set_point_state(self, point, state):
         row, col = point
@@ -165,17 +166,33 @@ class GameBoard(object):
                 ):
                     continue
                 three, four = False, False
-                checked_line_points = list()
+                checked_line_points = set()
                 for direction in self.directions:
-                    forward_count, forward_emtpy_count, is_countious, _, forward_point = self.check_line_state(
+                    (
+                        forward_count,
+                        forward_emtpy_count,
+                        is_countious,
+                        _,
+                        forward_point
+                    ) = self.check_line_state(
                         search_point, direction, PointStateEnum.BLACK, True)
-                    backward_count, backward_emtpy_count, _, _, backward_point = self.check_line_state(
+                    (
+                        backward_count,
+                        backward_emtpy_count,
+                        _,
+                        _,
+                        backward_point
+                    ) = self.check_line_state(
                         search_point, (-direction[0], -direction[1]), PointStateEnum.BLACK)
                     stone_count = forward_count + backward_count + 1
                     possible_count = (
-                        stone_count + forward_emtpy_count + backward_emtpy_count + int(not is_countious)
+                        stone_count + forward_emtpy_count +
+                        backward_emtpy_count + int(not is_countious)
                     )
-                    if possible_count < 5 or (backward_point, forward_point) in checked_line_points:
+                    if (
+                        possible_count < 5 or
+                        (backward_point, forward_point) in checked_line_points
+                    ):
                         continue
                     # double three
                     if (
@@ -185,35 +202,53 @@ class GameBoard(object):
                         and possible_count > 5
                     ):
                         if three:
-                            self.set_point_state(search_point, PointStateEnum.UNSELECTABLE)
+                            self.set_point_state(
+                                search_point, PointStateEnum.UNSELECTABLE)
                             self.unselectable_points.append(search_point)
                             break
                         three = True
                     # double four
                     elif stone_count == 4:
                         if four:
-                            self.set_point_state(search_point, PointStateEnum.UNSELECTABLE)
+                            self.set_point_state(
+                                search_point, PointStateEnum.UNSELECTABLE)
                             self.unselectable_points.append(search_point)
                             break
                         four = True
-                    checked_line_points.append((forward_point, backward_point))
+                    checked_line_points.add((forward_point, backward_point))
 
     def set_selectable_points(self):
         for point in self.unselectable_points:
             three, double_three = False, False
             four, double_four = False, False
             overline, endable = False, False
-            checked_line_points = list()
+            checked_line_points = set()
             for direction in self.directions:
-                forward_count, forward_emtpy_count, is_countious, _, forward_point = self.check_line_state(
+                (
+                    forward_count,
+                    forward_emtpy_count,
+                    is_countious,
+                    _,
+                    forward_point
+                ) = self.check_line_state(
                     point, direction, PointStateEnum.BLACK, True)
-                backward_count, backward_emtpy_count, _, _, backward_point = self.check_line_state(
+                (
+                    backward_count,
+                    backward_emtpy_count,
+                    _,
+                    _,
+                    backward_point
+                ) = self.check_line_state(
                     point, (-direction[0], -direction[1]), PointStateEnum.BLACK)
                 stone_count = forward_count + backward_count + 1
                 possible_count = (
-                    stone_count + forward_emtpy_count + backward_emtpy_count + int(not is_countious)
+                    stone_count + forward_emtpy_count +
+                    backward_emtpy_count + int(not is_countious)
                 )
-                if possible_count < 5 or (backward_point, forward_point) in checked_line_points:
+                if (
+                    possible_count < 5 or
+                    (backward_point, forward_point) in checked_line_points
+                ):
                     continue
                 if self.check_five(point, PointStateEnum.BLACK):
                     endable = True
@@ -236,7 +271,7 @@ class GameBoard(object):
                     four = True
                 elif stone_count >= 5 and is_countious:
                     overline = True
-                checked_line_points.append((forward_point, backward_point))
+                checked_line_points.add((forward_point, backward_point))
             if endable or not (double_three or double_four or overline):
                 self.set_point_state(point, PointStateEnum.EMPTY)
                 self.unselectable_points.remove(point)
@@ -250,7 +285,10 @@ class GameBoard(object):
         is_continous = True
         while True:
             row, col = row + row_dir, col + col_dir
-            if self.is_out_of_array((row, col)) or self.array[row][col] == opposite_state:
+            if (
+                self.is_out_of_array((row, col))
+                or self.array[row][col] == opposite_state
+            ):
                 break
             elif self.array[row][col] in [
                 PointStateEnum.EMPTY,
