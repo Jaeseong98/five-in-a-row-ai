@@ -1,7 +1,12 @@
 import traceback
 
 from .enum import GameMode, PointStateEnum, TurnStateEnum, GamestateEnum
-from .exc import OutOfIndexError, CanNotSelectError, TestEndError
+from .exc import (
+    OutOfIndexError,
+    CanNotSelectError,
+    GameEndError,
+    TestEndError,
+)
 from .config import BOARD_SIZE
 
 
@@ -13,7 +18,7 @@ class GameBoard(object):
     """
 
     def __init__(self, mode, black_agent=None, white_agent=None):
-        self.totalBlankCount = BOARD_SIZE * BOARD_SIZE
+        self.total_blank_count = BOARD_SIZE * BOARD_SIZE
         self.array = [
             [
                 PointStateEnum.EMPTY for i in range(BOARD_SIZE)
@@ -87,8 +92,6 @@ class GameBoard(object):
         self.array[row][col] = state
 
     def start(self):
-        point_states = [PointStateEnum.BLACK, PointStateEnum.WHITE]
-
         while True:
             try:
                 for move_function in self.move_functions:
@@ -96,11 +99,11 @@ class GameBoard(object):
                     point = (row, col)
                     self.array[row][col] = self.get_current_turn_point_state()
 
-                    # self.totalBlankCount -= 1
-                    # self.check_finished(
-                    #     self.totalBlankCount - len(self.unselectable_points),
-                    #     point
-                    # )
+                    self.total_blank_count -= 1
+                    self.check_finished(
+                        self.total_blank_count - len(self.unselectable_points),
+                        point
+                    )
 
                     if self.turn == TurnStateEnum.BLACK:
                         self.set_unselectable_points(point)
@@ -117,15 +120,10 @@ class GameBoard(object):
                 break
 
     def check_finished(self, left, point):
-        # Need to Make Enum
-        # 0: No Win, 1: Black Win, 2: White Win, 3: Draw
-
-        if self.check_lines(point):
-            return GamestateEnum.WHITE if self.turn == TurnStateEnum.WHITE else GamestateEnum.BLACK  # Ternary Operator
+        if self.check_five(point, self.get_current_turn_point_state()):
+            raise GameEndError(self.turn)
         elif left == 0:
-            return GamestateEnum.DRAW
-        else:
-            return GamestateEnum.CONTINUE
+            return GameEndError()
 
     def get_next_point_from_stdin(self):
         row, col = input("Input(row, col): ").split()
