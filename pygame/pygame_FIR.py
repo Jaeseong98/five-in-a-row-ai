@@ -1,8 +1,50 @@
 import pygame
+import math
 
 pygame.init()
 
-size = [800, 600]
+COLOR_RED = (255, 0, 0)
+COLOR_BLACK = (0, 0, 0)
+COLOR_BOARD = (240, 220, 165)
+COLOR_WHITE = (255, 255, 255)
+COLOR_UNSELECTABLE_BG = (255, 175, 175)
+
+cell_count = 15
+cell_size = 30
+
+radius = 13
+diff = 7
+
+def _GetPygamePos(pos):
+    i, j = pos
+    return (board_start_w + i * cell_size, board_start_h + j * cell_size)
+
+def _DrawBlackStone(pos):
+    pygame.draw.circle(screen, COLOR_BLACK, _GetPygamePos(pos), radius, width = 0)
+    return
+
+def _DrawWhiteStone(pos):
+    pygame.draw.circle(screen, COLOR_WHITE, _GetPygamePos(pos), radius, width = 0)
+    pygame.draw.circle(screen, COLOR_BLACK, _GetPygamePos(pos), radius, width = 1)
+    return
+
+def _DrawUnseletable(pos):
+    pg_pos = _GetPygamePos(pos)
+    pygame.draw.circle(screen, COLOR_UNSELECTABLE_BG, pg_pos, radius, width = 0)
+    pygame.draw.circle(screen, COLOR_RED, pg_pos, radius, width = 2)
+
+    pg_pos_w, pg_pos_h = pg_pos
+    pygame.draw.line(screen, COLOR_RED, (pg_pos_w - diff, pg_pos_h - diff), (pg_pos_w + diff, pg_pos_h + diff), width = 3)
+    pygame.draw.line(screen, COLOR_RED, (pg_pos_w + diff, pg_pos_h - diff), (pg_pos_w - diff, pg_pos_h + diff), width = 3)
+
+    return
+
+board_start_w = 40
+board_start_h = 40
+board_end_w = board_start_w + cell_size * cell_count
+board_end_h = board_start_h + cell_size * cell_count
+
+size = [530, 530]
 screen = pygame.display.set_mode(size)
 
 title_name = "Five In A Row"
@@ -18,6 +60,23 @@ while not done:
         if event.type == pygame.QUIT:
             done = True
 
-    screen.fill((255, 255, 255))
+    screen.fill(COLOR_BOARD)
 
+    for i in range(cell_count + 1):
+        pygame.draw.line(screen, COLOR_BLACK, (board_start_w + cell_size * i , board_start_h), (board_start_w + cell_size * i , board_end_h), width = 2)
+        pygame.draw.line(screen, COLOR_BLACK, (board_start_w, board_start_h + cell_size * i), (board_end_w, board_start_h + cell_size * i), width = 2)
+
+    # Basic Test
+    _DrawBlackStone((0, 0))
+    _DrawWhiteStone((0, 1))
+    _DrawWhiteStone((0, 2))
+
+    # 33 Rule Test
+    _DrawBlackStone((5, 5))
+    _DrawBlackStone((5, 6))
+    _DrawBlackStone((6, 7))
+    _DrawBlackStone((7, 7))
+    _DrawUnseletable((5, 7))
+    
     pygame.display.flip()
+
