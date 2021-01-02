@@ -1,11 +1,15 @@
 import pygame
 import math
 
+ENUM_STATE_MENU = 0
+ENUM_STATE_GAME = 1
+
 pygame.init()
 
 COLOR_RED = (255, 0, 0)
 COLOR_BLACK = (0, 0, 0)
 COLOR_BOARD = (240, 220, 165)
+COLOR_GRAY = (180, 180, 180)
 COLOR_WHITE = (255, 255, 255)
 COLOR_UNSELECTABLE_BG = (255, 175, 175)
 
@@ -36,7 +40,6 @@ def _DrawUnseletable(pos):
     pg_pos_w, pg_pos_h = pg_pos
     pygame.draw.line(screen, COLOR_RED, (pg_pos_w - diff, pg_pos_h - diff), (pg_pos_w + diff, pg_pos_h + diff), width = 3)
     pygame.draw.line(screen, COLOR_RED, (pg_pos_w + diff, pg_pos_h - diff), (pg_pos_w - diff, pg_pos_h + diff), width = 3)
-
     return
 
 board_start_w = 40
@@ -53,6 +56,8 @@ pygame.display.set_caption(title_name)
 done = False
 clock = pygame.time.Clock()
 
+state = ENUM_STATE_MENU
+
 while not done:
     clock.tick(10)
 
@@ -60,23 +65,34 @@ while not done:
         if event.type == pygame.QUIT:
             done = True
 
-    screen.fill(COLOR_BOARD)
+    if state == ENUM_STATE_MENU:
+        screen.fill(COLOR_BOARD)
 
-    for i in range(cell_count + 1):
-        pygame.draw.line(screen, COLOR_BLACK, (board_start_w + cell_size * i , board_start_h), (board_start_w + cell_size * i , board_end_h), width = 2)
-        pygame.draw.line(screen, COLOR_BLACK, (board_start_w, board_start_h + cell_size * i), (board_end_w, board_start_h + cell_size * i), width = 2)
+        fontObj = pygame.font.Font(None, 32)
+        textRect = pygame.draw.rect(screen, COLOR_GRAY, (200, 200, 125, 25), width=0)
+        text = fontObj.render('Hello world!', True, COLOR_BLACK)
+        screen.blit(text, textRect)
 
-    # Basic Test
-    _DrawBlackStone((0, 0))
-    _DrawWhiteStone((0, 1))
-    _DrawWhiteStone((0, 2))
-
-    # 33 Rule Test
-    _DrawBlackStone((5, 5))
-    _DrawBlackStone((5, 6))
-    _DrawBlackStone((6, 7))
-    _DrawBlackStone((7, 7))
-    _DrawUnseletable((5, 7))
+        pygame.display.flip()
     
-    pygame.display.flip()
+    elif state == ENUM_STATE_GAME:
+        screen.fill(COLOR_BOARD)
+
+        for i in range(cell_count + 1):
+            pygame.draw.line(screen, COLOR_BLACK, (board_start_w + cell_size * i , board_start_h), (board_start_w + cell_size * i , board_end_h), width = 2)
+            pygame.draw.line(screen, COLOR_BLACK, (board_start_w, board_start_h + cell_size * i), (board_end_w, board_start_h + cell_size * i), width = 2)
+
+        # Basic Test
+        _DrawBlackStone((0, 0))
+        _DrawWhiteStone((0, 1))
+        _DrawWhiteStone((0, 2))
+
+        # 33 Rule Test
+        _DrawBlackStone((5, 5))
+        _DrawBlackStone((5, 6))
+        _DrawBlackStone((6, 7))
+        _DrawBlackStone((7, 7))
+        _DrawUnseletable((5, 7))
+        
+        pygame.display.flip()
 
