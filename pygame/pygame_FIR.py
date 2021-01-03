@@ -100,6 +100,7 @@ while not done:
             is_first_draw_menu = False
             buttonHoverIndex = -1
             buttonClickIndex = -1
+            isButtonHoverList = []
 
             screen.fill(COLOR_BOARD)
 
@@ -127,7 +128,49 @@ while not done:
                 screen.blit(textObj, (text_x, text_y))
             
                 buttonPosList.append((text_x, text_y))
+                isButtonHoverList.append(False)
             pygame.display.flip()
+
+        buttonUpdateList = []
+        for i in range(3):
+            if buttonHoverIndex != i and isButtonHoverList[i] == True:
+                cur_btn_bg_start_w = btn_bg_start_w
+                cur_btn_bg_start_h = btn_bg_start_h + (3 / 2 * btn_bg_h * i)
+
+                textBG = pygame.draw.rect(screen, COLOR_GRAY, (cur_btn_bg_start_w, cur_btn_bg_start_h, btn_bg_w, btn_bg_h), width=0)
+                
+                background_center_w = cur_btn_bg_start_w + btn_bg_w / 2
+                background_center_h = cur_btn_bg_start_h + btn_bg_h / 2
+
+                textObj = fontObj.render(strList[i], True, COLOR_BLACK)
+                (x, y, w, h) = textObj.get_rect()
+                text_x = background_center_w - w / 2
+                text_y = background_center_h - h / 2
+                screen.blit(textObj, (text_x, text_y))
+
+                buttonUpdateList.append((cur_btn_bg_start_w, cur_btn_bg_start_h, btn_bg_w, btn_bg_h))
+                isButtonHoverList[i] = False
+
+            if buttonHoverIndex == i and isButtonHoverList[i] == False:
+                cur_btn_bg_start_w = btn_bg_start_w
+                cur_btn_bg_start_h = btn_bg_start_h + (3 / 2 * btn_bg_h * i)
+
+                textBG = pygame.draw.rect(screen, COLOR_GRAY, (cur_btn_bg_start_w, cur_btn_bg_start_h, btn_bg_w, btn_bg_h), width=0)
+                
+                background_center_w = cur_btn_bg_start_w + btn_bg_w / 2
+                background_center_h = cur_btn_bg_start_h + btn_bg_h / 2
+
+                textObj = fontObj.render(strList[i], True, COLOR_WHITE)
+                (x, y, w, h) = textObj.get_rect()
+                text_x = background_center_w - w / 2
+                text_y = background_center_h - h / 2
+                screen.blit(textObj, (text_x, text_y))
+
+                buttonUpdateList.append((cur_btn_bg_start_w, cur_btn_bg_start_h, btn_bg_w, btn_bg_h))
+                isButtonHoverList[i] = True
+
+        if len(buttonUpdateList) > 0:
+            pygame.display.update(buttonUpdateList)
 
         if buttonClickIndex > -1:
             state = ENUM_STATE_GAME
