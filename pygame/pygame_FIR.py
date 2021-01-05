@@ -10,8 +10,9 @@ COLOR_RED = (255, 0, 0)
 COLOR_BLACK = (0, 0, 0)
 COLOR_BOARD = (240, 220, 165)
 COLOR_GRAY = (180, 180, 180)
-COLOR_WHITE = (255, 255, 255)
 COLOR_UNSELECTABLE_BG = (255, 175, 175)
+COLOR_WHITE = (255, 255, 255)
+COLOR_YELLOW = (255, 255, 0)
 
 cell_count = 15
 cell_size = 30
@@ -19,9 +20,31 @@ cell_size = 30
 radius = 13
 diff = 7
 
+board_start_w = 40
+board_start_h = 40
+board_end_w = board_start_w + cell_size * (cell_count - 1)
+board_end_h = board_start_h + cell_size * (cell_count - 1)
+
+btn_bg_w = 280
+btn_bg_h = 50
+btn_bg_start_w = 125
+btn_bg_start_h = 200
+
+size = [500, 500]
+
 def _GetPygamePos(pos):
     i, j = pos
     return (board_start_w + i * cell_size, board_start_h + j * cell_size)
+
+def _DrawHoverZone(pos):
+    pygame.draw.circle(screen, COLOR_YELLOW, _GetPygamePos(pos), radius - 10, width = 0)
+    return
+
+def _EraseHoverZone(pos):
+    pygame.draw.circle(screen, COLOR_BOARD, _GetPygamePos(pos), radius - 10, width = 0)
+    # pygame.draw.line(screen, COLOR_BLACK, (board_start_w + cell_size * i , board_start_h), (board_start_w + cell_size * i , board_end_h), width = 2)
+    # pygame.draw.line(screen, COLOR_BLACK, (board_start_w, board_start_h + cell_size * i), (board_end_w, board_start_h + cell_size * i), width = 2)
+    return
 
 def _DrawBlackStone(pos):
     pygame.draw.circle(screen, COLOR_BLACK, _GetPygamePos(pos), radius, width = 0)
@@ -51,17 +74,15 @@ def _IsButtonCollision(pos):
             return i
     return -1
 
-board_start_w = 40
-board_start_h = 40
-board_end_w = board_start_w + cell_size * cell_count
-board_end_h = board_start_h + cell_size * cell_count
+def _IsCellCollision(pos):
+    w, h = pos
+    div_w, mod_w = divmod((w - board_start_w + 0.5 * cell_size), cell_size)
+    div_h, mod_h = divmod((h - board_start_h + 0.5 * cell_size), cell_size)
 
-btn_bg_w = 280
-btn_bg_h = 50
-btn_bg_start_w = 125
-btn_bg_start_h = 200
+    if ((3 < mod_w and mod_w < 27) and (3 < mod_h and mod_h < 27)):
+        return (int(div_w), int(div_h))
+    return (-1, -1)
 
-size = [530, 530]
 screen = pygame.display.set_mode(size)
 
 title_name = "Five In A Row"
@@ -73,6 +94,14 @@ clock = pygame.time.Clock()
 state = ENUM_STATE_MENU
 
 is_first_draw_menu = True
+is_first_draw_game = True
+cur_hover_w, cur_hover_h = -1, -1
+hover_w, hover_h = -1, -1
+click_w, click_h = -1, -1
+
+array = [ [ 0 for i in range(cell_count) ] for j in range(cell_count)]
+
+is_black_turn = True
 
 while not done:
     clock.tick(10)
@@ -96,7 +125,7 @@ while not done:
                 buttonClickIndex = _IsButtonCollision(event.pos)
                 print(buttonClickIndex)
 
-        if is_first_draw_menu == True:
+        if is_first_draw_menu:
             is_first_draw_menu = False
             buttonHoverIndex = -1
             buttonClickIndex = -1
@@ -174,27 +203,51 @@ while not done:
 
         if buttonClickIndex > -1:
             state = ENUM_STATE_GAME
-            
 
-    
     elif state == ENUM_STATE_GAME:
-        screen.fill(COLOR_BOARD)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+            if event.type == pygame.MOUSEMOTION:
+                hover_w, hover_h = _IsCellCollision(event.pos)
+                print((hover_w, hover_h))
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                click_w, click_h = _IsCellCollision(event.pos)
 
-        for i in range(cell_count + 1):
-            pygame.draw.line(screen, COLOR_BLACK, (board_start_w + cell_size * i , board_start_h), (board_start_w + cell_size * i , board_end_h), width = 2)
-            pygame.draw.line(screen, COLOR_BLACK, (board_start_w, board_start_h + cell_size * i), (board_end_w, board_start_h + cell_size * i), width = 2)
+        if is_first_draw_game:
+            is_first_draw_game = False
+            screen.fill(COLOR_BOARD)
 
-        # Basic Test
-        _DrawBlackStone((0, 0))
-        _DrawWhiteStone((0, 1))
-        _DrawWhiteStone((0, 2))
+            for i in range(cell_count):
+                pygame.draw.line(screen, COLOR_BLACK, (board_start_w + cell_size * i , board_start_h), (board_start_w + cell_size * i , board_end_h), width = 2)
+                pygame.draw.line(screen, COLOR_BLACK, (board_start_w, board_start_h + cell_size * i), (board_end_w, board_start_h + cell_size * i), width = 2)
 
-        # 33 Rule Test
-        _DrawBlackStone((5, 5))
-        _DrawBlackStone((5, 6))
-        _DrawBlackStone((6, 7))
-        _DrawBlackStone((7, 7))
-        _DrawUnseletable((5, 7))
-        
-        pygame.display.flip()
+            # Basic Test
+            _DrawBlackStone((0, 0))
+            _DrawWhiteStone((0, 1))
+            _DrawWhiteStone((0, 2))
+
+            # 33 Rule Test
+            _DrawBlackStone((5, 5))
+            _DrawBlackStone((5, 6))
+            _DrawBlackStone((6, 7))
+            _DrawBlackStone((7, 7))
+            _DrawUnseletable((5, 7))
+            
+            pygame.display.flip()
+
+        if ((0 <= hover_w and hover_w <= 14) and (0 <= hover_h and hover_h <= 14)):
+            if array[hover_w][hover_h] == 0:
+                if((0 <= cur_hover_w and cur_hover_w <= 14) and (0 <= cur_hover_h and cur_hover_h <= 14)):
+                    _EraseHoverZone((cur_hover_w, cur_hover_h))
+
+                cur_hover_w, cur_hover_h = hover_w, hover_h
+                _DrawHoverZone((cur_hover_w, cur_hover_h))
+
+                pygame.display.flip()
+                pass
+
+        if ((0 <= click_w and click_w <= 14) and (0 <= click_w and click_w <= 14)):
+            if array[hover_w][hover_h] == 0:
+                pass
 
