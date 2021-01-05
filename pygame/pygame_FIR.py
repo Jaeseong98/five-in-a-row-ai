@@ -42,8 +42,12 @@ def _DrawHoverZone(pos):
 
 def _EraseHoverZone(pos):
     pygame.draw.circle(screen, COLOR_BOARD, _GetPygamePos(pos), radius - 10, width = 0)
-    # pygame.draw.line(screen, COLOR_BLACK, (board_start_w + cell_size * i , board_start_h), (board_start_w + cell_size * i , board_end_h), width = 2)
-    # pygame.draw.line(screen, COLOR_BLACK, (board_start_w, board_start_h + cell_size * i), (board_end_w, board_start_h + cell_size * i), width = 2)
+    
+    w, h = pos
+    w_line = board_start_w + cell_size * w
+    h_line = board_start_h + cell_size * h
+    pygame.draw.line(screen, COLOR_BLACK, (w_line - 0.5 * cell_size , h_line), (w_line + 0.5 * cell_size , h_line), width = 2)
+    pygame.draw.line(screen, COLOR_BLACK, (w_line, h_line - 0.5 * cell_size), (w_line, h_line + 0.5 * cell_size), width = 2)
     return
 
 def _DrawBlackStone(pos):
