@@ -46,8 +46,12 @@ def _EraseHoverZone(pos):
     w, h = pos
     w_line = board_start_w + cell_size * w
     h_line = board_start_h + cell_size * h
-    pygame.draw.line(screen, COLOR_BLACK, (w_line - 0.5 * cell_size , h_line), (w_line + 0.5 * cell_size , h_line), width = 2)
-    pygame.draw.line(screen, COLOR_BLACK, (w_line, h_line - 0.5 * cell_size), (w_line, h_line + 0.5 * cell_size), width = 2)
+    w_start = 0.5 if w > 0 else 0
+    w_end = 0.5 if w < 14 else 0
+    h_start = 0.5 if h > 0 else 0
+    h_end = 0.5 if h < 14 else 0
+    pygame.draw.line(screen, COLOR_BLACK, (w_line - w_start * cell_size, h_line), (w_line + w_end * cell_size , h_line), width = 2)
+    pygame.draw.line(screen, COLOR_BLACK, (w_line, h_line - h_start * cell_size), (w_line, h_line + h_end * cell_size), width = 2)
     return
 
 def _DrawBlackStone(pos):
@@ -251,7 +255,19 @@ while not done:
                 pygame.display.flip()
                 pass
 
-        if ((0 <= click_w and click_w <= 14) and (0 <= click_w and click_w <= 14)):
-            if array[hover_w][hover_h] == 0:
+        if ((0 <= click_w and click_w <= 14) and (0 <= click_h and click_h <= 14)):
+            if array[click_w][click_h] == 0:
+                if is_black_turn:
+                    _DrawBlackStone((click_w, click_h))
+                    array[click_w][click_h] = 2
+                    cur_hover_w, cur_hover_h = -1, -1
+                else:
+                    _DrawWhiteStone((click_w, click_h))
+                    array[click_w][click_h] = 3
+                    cur_hover_w, cur_hover_h = -1, -1
+
+                is_black_turn = not is_black_turn
+
+                pygame.display.flip()
                 pass
 
