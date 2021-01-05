@@ -230,30 +230,21 @@ while not done:
                 pygame.draw.line(screen, COLOR_BLACK, (board_start_w + cell_size * i , board_start_h), (board_start_w + cell_size * i , board_end_h), width = 2)
                 pygame.draw.line(screen, COLOR_BLACK, (board_start_w, board_start_h + cell_size * i), (board_end_w, board_start_h + cell_size * i), width = 2)
 
-            # Basic Test
-            _DrawBlackStone((0, 0))
-            _DrawWhiteStone((0, 1))
-            _DrawWhiteStone((0, 2))
-
-            # 33 Rule Test
-            _DrawBlackStone((5, 5))
-            _DrawBlackStone((5, 6))
-            _DrawBlackStone((6, 7))
-            _DrawBlackStone((7, 7))
             _DrawUnseletable((5, 7))
+            array[5][7] = 1
             
             pygame.display.flip()
 
+        updateRectList = []
         if ((0 <= hover_w and hover_w <= 14) and (0 <= hover_h and hover_h <= 14)):
             if array[hover_w][hover_h] == 0:
                 if((0 <= cur_hover_w and cur_hover_w <= 14) and (0 <= cur_hover_h and cur_hover_h <= 14)):
                     _EraseHoverZone((cur_hover_w, cur_hover_h))
+                    updateRectList.append(pygame.Rect(board_start_w + cell_size * (cur_hover_w - 0.5), board_start_h + cell_size * (cur_hover_h - 0.5), cell_size, cell_size))
 
                 cur_hover_w, cur_hover_h = hover_w, hover_h
                 _DrawHoverZone((cur_hover_w, cur_hover_h))
-
-                pygame.display.flip()
-                pass
+                updateRectList.append(pygame.Rect(board_start_w + cell_size * (cur_hover_w - 0.5), board_start_h + cell_size * (cur_hover_h - 0.5), cell_size, cell_size))
 
         if ((0 <= click_w and click_w <= 14) and (0 <= click_h and click_h <= 14)):
             if array[click_w][click_h] == 0:
@@ -268,6 +259,9 @@ while not done:
 
                 is_black_turn = not is_black_turn
 
-                pygame.display.flip()
-                pass
+                updateRectList.append(pygame.Rect(board_start_w + cell_size * (click_w - 0.5), board_start_h + cell_size * (click_h - 0.5), cell_size, cell_size))
+
+
+        if len(updateRectList) > 0:
+                    pygame.display.update(updateRectList)
 
