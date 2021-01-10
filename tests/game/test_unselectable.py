@@ -17,7 +17,6 @@ def run_test(test_name, resource_manager):
         )
     )
     game_board = GameBoard(
-        mode=GameMode.COMPUTER_COMPUTER,
         black_agent=black_agent,
         white_agent=white_agent,
     )

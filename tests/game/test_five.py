@@ -16,7 +16,6 @@ def run_test(test_name, resource_manager, winner):
         resource_manager.read_text(f"/test_five/white/{test_name}.txt")
     )
     game_board = GameBoard(
-        mode=GameMode.COMPUTER_COMPUTER,
         black_agent=black_agent,
         white_agent=white_agent,
     )
