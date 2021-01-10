@@ -1,8 +1,9 @@
-from game.enum import PygameStateEnum
-from game.config import PygameConfig
-
+import click
 import pygame
 import math
+
+from game.enum import PygameStateEnum, GameMode
+from game.config import PygameConfig
 
 class PygameFIR(object):
     def __init__(self, mode):
@@ -240,6 +241,17 @@ class PygameFIR(object):
             elif self.state == PygameStateEnum.STATE_GAME:
                 self._SetGame()
 
-if __name__ == "__main__":
+
+@click.command()
+@click.option('--mode', default='HUMAN_HUMAN', help='')
+def run(mode):
+    mode = GameMode(mode)
+    print(mode)
     pygame_FIR = PygameFIR("")
     pygame_FIR.start()
+    
+    gameboard = GameBoard(mode)
+    gameboard.start()
+
+if __name__ == "__main__":
+    run()
