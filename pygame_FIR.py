@@ -1,9 +1,13 @@
 import click
 import pygame
 import math
+import time
+import threading
 
+from threading import Thread
 from game.enum import PygameStateEnum, GameMode
 from game.config import PygameConfig
+from game.board import GameBoard
 
 class PygameFIR(object):
     def __init__(self, mode):
@@ -22,6 +26,8 @@ class PygameFIR(object):
         self.array = [ [ 0 for i in range(PygameConfig.CELL_COUNT) ] for j in range(PygameConfig.CELL_COUNT)]
 
         self.is_black_turn = True
+
+        self.mode = mode
         
     def _GetPygamePos(self, pos):
         i, j = pos
@@ -89,7 +95,7 @@ class PygameFIR(object):
                 # print(self.buttonHoverIndex)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.buttonClickIndex = self._IsButtonCollision(event.pos)
-                print(self.buttonClickIndex)
+                # print(self.buttonClickIndex)
 
         if self.is_first_draw_menu:
             self.is_first_draw_menu = False
@@ -176,13 +182,17 @@ class PygameFIR(object):
                 self.is_finished_pygame = True
             if event.type == pygame.MOUSEMOTION:
                 self.hover_w, self.hover_h = self._IsCellCollision(event.pos)
-                print((self.hover_w, self.hover_h))
+                # print((self.hover_w, self.hover_h))
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.click_w, self.click_h = self._IsCellCollision(event.pos)
+                self.isFinished, array = self.gameboard.pygame_after_click((self.click_h, self.click_w))
+                print(self.gameboard)
 
         if self.is_first_draw_game:
             self.is_first_draw_game = False
+            self.isFinished = False
             self.screen.fill(PygameConfig.COLOR_BOARD)
+            self.gameboard = GameBoard(self.mode)
 
             for i in range(PygameConfig.CELL_COUNT):
                 pygame.draw.line(self.screen, PygameConfig.COLOR_BLACK, (PygameConfig.BOARD_START_W + PygameConfig.CELL_SIZE * i , PygameConfig.BOARD_START_H), (PygameConfig.BOARD_START_W + PygameConfig.CELL_SIZE * i , PygameConfig.BOARD_END_H), width = 2)
@@ -219,9 +229,13 @@ class PygameFIR(object):
 
                 updateRectList.append(pygame.Rect(PygameConfig.BOARD_START_W + PygameConfig.CELL_SIZE * (self.click_w - 0.5), PygameConfig.BOARD_START_H + PygameConfig.CELL_SIZE * (self.click_h - 0.5), PygameConfig.CELL_SIZE, PygameConfig.CELL_SIZE))
 
-
+        print(len(updateRectList))
         if len(updateRectList) > 0:
-                    pygame.display.update(updateRectList)
+            pygame.display.update(updateRectList)
+
+        if self.isFinished:
+            print("Change to Result!")
+            self.state = PygameStateEnum.STATE_RESULT
 
     def start(self):
         pygame.init()
@@ -234,24 +248,24 @@ class PygameFIR(object):
 
         while not self.is_finished_pygame:
             self.clock.tick(10)
-
+            
             if self.state == PygameStateEnum.STATE_MENU:
                 self._SetMenu()
 
             elif self.state == PygameStateEnum.STATE_GAME:
                 self._SetGame()
 
+            elif self.state == PygameStateEnum.STATE_RESULT:
+                print("Result!")
+                pass
 
 @click.command()
 @click.option('--mode', default='HUMAN_HUMAN', help='')
 def run(mode):
     mode = GameMode(mode)
-    print(mode)
-    pygame_FIR = PygameFIR("")
+
+    pygame_FIR = PygameFIR(mode)
     pygame_FIR.start()
     
-    gameboard = GameBoard(mode)
-    gameboard.start()
-
 if __name__ == "__main__":
     run()
