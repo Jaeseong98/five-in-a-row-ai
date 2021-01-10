@@ -41,3 +41,9 @@ class GamestateEnum(enum.Enum):
     BLACK = 1
     WHITE = 2
     DRAW = 3
+
+# For pygame
+class PygameStateEnum(enum.Enum):
+    STATE_MENU = 0
+    STATE_GAME = 1
+    STATE_RESULT = 2
