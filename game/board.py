@@ -106,7 +106,7 @@ class GameBoard(object):
                     self.unselectable_points.remove(point)
                 self.set_selectable_points()
             self.change_turn()
-        return isFinished, self.array
+        return self.array
 
     def start(self):
         while True:

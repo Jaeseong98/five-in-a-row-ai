@@ -185,7 +185,7 @@ class PygameFIR(object):
                 # print((self.hover_w, self.hover_h))
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.click_w, self.click_h = self._IsCellCollision(event.pos)
-                self.isFinished, array = self.gameboard.pygame_after_click((self.click_h, self.click_w))
+                array = self.gameboard.pygame_after_click((self.click_h, self.click_w))
                 print(self.gameboard)
 
         if self.is_first_draw_game:
