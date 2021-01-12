@@ -87,6 +87,27 @@ class GameBoard(object):
         else:
             raise ValueError('input parameter `state` is not PointStateEnum')
 
+    def pygame_after_click(self, pos):
+        row, col = pos
+        point = (row, col)
+        if (self.array[row][col] == PointStateEnum.EMPTY or (self.turn == TurnStateEnum.WHITE and self.array[row][col] == PointStateEnum.UNSELECTABLE)):
+            self.array[row][col] = self.get_current_turn_point_state()
+
+            self.total_blank_count -= 1
+            isFinished = self.check_finished(
+                self.total_blank_count - len(self.unselectable_points),
+                point
+            )
+
+            if self.turn == TurnStateEnum.BLACK:
+                self.set_unselectable_points(point)
+            else:
+                if self.array[row][col] == PointStateEnum.UNSELECTABLE:
+                    self.unselectable_points.remove(point)
+                self.set_selectable_points()
+            self.change_turn()
+        return self.array
+
     def start(self):
         while True:
             try:
@@ -133,6 +154,7 @@ class GameBoard(object):
             raise GameEndError(self.turn)
         elif left == 0:
             return GameEndError()
+        return False
 
     def set_unselectable_points(self, point):
         # Overline
