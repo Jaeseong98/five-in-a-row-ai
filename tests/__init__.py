@@ -12,7 +12,7 @@ class TestAgent(BaseAgent):
         self.points = ast.literal_eval(resource)
         self.index = 0
 
-    def get_next_point(self):
+    def get_next_point(self, array, possibles):
         if self.index >= len(self.points):
             raise TestEndError
         points = self.points[self.index]

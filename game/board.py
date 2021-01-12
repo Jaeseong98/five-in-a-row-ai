@@ -15,13 +15,21 @@ class GameBoard(object):
 
     """
 
-    def __init__(self, mode, black_agent=None, white_agent=None):
-        self.total_blank_count = BOARD_SIZE * BOARD_SIZE
-        self.array = [
-            [
-                PointStateEnum.EMPTY for i in range(BOARD_SIZE)
-            ] for j in range(BOARD_SIZE)
-        ]
+    def __init__(self, black_agent, white_agent):
+        self.array = list()
+        self.digit_array = list()
+        self.empty_points = list()
+        for i in range(BOARD_SIZE):
+            line = list()
+            digit_line = list()
+            for j in range(BOARD_SIZE):
+                line.append(PointStateEnum.EMPTY)
+                digit_line.append(PointStateEnum.EMPTY.value)
+                self.empty_points.append((i, j))
+            self.array.append(line)
+            self.digit_array.append(digit_line)
+
+        self.total_empty_count = BOARD_SIZE * BOARD_SIZE
         self.unselectable_points = list()
         self.turn = TurnStateEnum.BLACK
         self.black_agent = black_agent
@@ -31,27 +39,10 @@ class GameBoard(object):
         ]
 
         try:
-            mode_function_map = {
-                GameMode.HUMAN_HUMAN: [
-                    self.get_next_point_from_stdin,
-                    self.get_next_point_from_stdin
-                ],
-                GameMode.HUMAN_COMPUTER: [
-                    self.get_next_point_from_stdin,
-                    self.white_agent.get_next_point
-                ],
-                GameMode.COMPUTER_HUMAN: [
-                    self.black_agent.get_next_point,
-                    self.get_next_point_from_stdin
-                ],
-                GameMode.COMPUTER_COMPUTER: [
-                    self.black_agent.get_next_point,
-                    self.white_agent.get_next_point
-                ]
-            }
-            self.move_functions = mode_function_map[mode]
-        except KeyError:
-            raise ValueError(f"Wrong game mode input: {mode}")
+            self.move_functions = [
+                self.black_agent.get_next_point,
+                self.white_agent.get_next_point
+            ]
         except AttributeError:
             raise ValueError("Invalid agent")
 
@@ -88,27 +79,44 @@ class GameBoard(object):
             or col < 0 or BOARD_SIZE - 1 < col
         )
 
-    def set_point_state(self, point, state):
+    def set_point_state(self, point, state: PointStateEnum):
         row, col = point
-        self.array[row][col] = state
+        if isinstance(state, PointStateEnum):
+            self.array[row][col] = state
+            self.digit_array[row][col] = state.value
+        else:
+            raise ValueError('input parameter `state` is not PointStateEnum')
 
     def start(self):
         while True:
             try:
                 for move_function in self.move_functions:
-                    row, col = move_function()
+                    if self.turn == TurnStateEnum.BLACK:
+                        possible = set(self.empty_points).difference(
+                            set(self.unselectable_points)
+                        )
+                    else:
+                        possible = set(self.empty_points)
+                    row, col = move_function(self.digit_array, possible)
                     point = (row, col)
-                    self.array[row][col] = self.get_current_turn_point_state()
-
-                    self.total_blank_count -= 1
-                    self.check_finished(
-                        self.total_blank_count - len(self.unselectable_points),
-                        point
+                    self.set_point_state(
+                        point,
+                        self.get_current_turn_point_state()
                     )
+                    self.empty_points.remove(point)
+                    self.total_empty_count -= 1
 
                     if self.turn == TurnStateEnum.BLACK:
+                        self.check_finished(
+                            self.total_empty_count - len(self.unselectable_points),
+                            point
+                        )
                         self.set_unselectable_points(point)
                     else:
+                        self.check_finished(
+                            self.total_empty_count,
+                            point
+                        )
                         if self.array[row][col] == PointStateEnum.UNSELECTABLE:
                             self.unselectable_points.remove(point)
                         self.set_selectable_points()
@@ -125,23 +133,6 @@ class GameBoard(object):
             raise GameEndError(self.turn)
         elif left == 0:
             return GameEndError()
-
-    def get_next_point_from_stdin(self):
-        row, col = input("Input(row, col): ").split()
-        row, col = int(row), int(col)
-        if self.is_out_of_array((row, col)):
-            raise OutOfIndexError
-        if self.array[row][col] in [
-            PointStateEnum.BLACK,
-            PointStateEnum.WHITE
-        ]:
-            raise CanNotSelectError
-        if (
-            self.array[row][col] == PointStateEnum.UNSELECTABLE
-            and self.turn == PointStateEnum.BLACK
-        ):
-            raise CanNotSelectError
-        return (row, col)
 
     def set_unselectable_points(self, point):
         # Overline

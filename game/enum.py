@@ -29,6 +29,12 @@ class TurnStateEnum(enum.Enum):
     BLACK = 0
     WHITE = 1
 
+    def get_opposite(self):
+        if self == self.BLACK:
+            return self.WHITE
+        else:
+            return self.BLACK
+
 
 class GamestateEnum(enum.Enum):
     CONTINUE = 0
